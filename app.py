@@ -4,13 +4,14 @@ from flask import Flask, render_template_string, request, jsonify
 
 app = Flask(__name__)
 
-# Product catalog with fixed prices, UPI IDs, and dynamic QR codes
+BASE_URL = "https://panel-online-services.onrender.com"
+
 PRODUCTS = [
     {
         "id": 1,
         "name": "Panel",
         "price": "₹20",
-        "image": "/static/panel_artwork.jpg",
+        "image": f"{BASE_URL}/static/panel_artwork.jpg",
         "live": True,
         "upi_link": "upi://pay?pa=7276052050@fam&pn=PANEL%20OFFICIAL&am=20.00&cu=INR&tn=Panel%20Payment",
         "qr": "https://api.qrserver.com/v1/create-qr-code/?size=250x250&data=upi%3A%2F%2Fpay%3Fpa%3D7276052050%40fam%26pn%3DPANEL%2520OFFICIAL%26am%3D20.00%26cu%3DINR%26tn%3DPanel%2520Payment",
@@ -19,7 +20,7 @@ PRODUCTS = [
         "id": 2,
         "name": "Panel Pro",
         "price": "₹25",
-        "image": "/static/panel_artwork.jpg",
+        "image": f"{BASE_URL}/static/panel_artwork.jpg",
         "live": True,
         "upi_link": "upi://pay?pa=7276052050@fam&pn=PANEL%20OFFICIAL&am=25.00&cu=INR&tn=Panel%20Pro%20Payment",
         "qr": "https://api.qrserver.com/v1/create-qr-code/?size=250x250&data=upi%3A%2F%2Fpay%3Fpa%3D7276052050%40fam%26pn%3DPANEL%2520OFFICIAL%26am%3D25.00%26cu%3DINR%26tn%3DPanel%2520Pro%2520Payment",
@@ -28,7 +29,7 @@ PRODUCTS = [
         "id": 3,
         "name": "Panel Premium",
         "price": "₹30",
-        "image": "/static/panel_artwork.jpg",
+        "image": f"{BASE_URL}/static/panel_artwork.jpg",
         "live": True,
         "upi_link": "upi://pay?pa=7276052050@fam&pn=PANEL%20OFFICIAL&am=30.00&cu=INR&tn=Panel%20Premium%20Payment",
         "qr": "https://api.qrserver.com/v1/create-qr-code/?size=250x250&data=upi%3A%2F%2Fpay%3Fpa%3D7276052050%40fam%26pn%3DPANEL%2520OFFICIAL%26am%3D30.00%26cu%3DINR%26tn%3DPanel%2520Premium%2520Payment",
@@ -354,6 +355,9 @@ PAGE = """
 </head>
 <body>
 
+  <!-- Audio Element (Intro Sound) -->
+  <audio id="introAudio" src="/static/intro_sound.mp3" preload="auto"></audio>
+
   <div id="intro-bg" aria-hidden="true"></div>
   <canvas id="cyl" aria-hidden="true"></canvas>
 
@@ -388,11 +392,11 @@ PAGE = """
     </footer>
   </div>
 
+  <!-- Order & Payment Modal -->
   <div id="orderModal" class="modal-backdrop" onclick="closeModalOnBackdrop(event)">
     <div class="modal-box">
       <button class="close-btn" onclick="closeModal()">&times;</button>
       
-      <!-- Step 1: Delivery Details Form -->
       <div id="step-details">
         <h3 id="formTitle" style="color:#fff; font-size:1.2rem; margin-bottom:4px;">Delivery Details</h3>
         <p style="color:var(--text-sub); font-size:0.8rem; margin-bottom:16px;">Enter details for 20-30 mins delivery</p>
@@ -414,7 +418,6 @@ PAGE = """
         </form>
       </div>
 
-      <!-- Step 2: Payment Gateway Options -->
       <div id="step-pay" style="display:none;">
         <h3 id="payTitle" style="color:#fff; font-size:1.15rem; margin-bottom:4px;"></h3>
         <p style="color:var(--text-sub); font-size:0.82rem; margin-bottom:10px;">Scan QR or click below to complete payment</p>
@@ -427,6 +430,33 @@ PAGE = """
   <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
   {% raw %}
   <script>
+  // Play sound after 3 seconds with user interaction fallback for mobile browsers
+  var audioPlayed = false;
+  function triggerAudio() {
+    if (audioPlayed) return;
+    var audio = document.getElementById('introAudio');
+    if (audio) {
+      audio.play().then(function() {
+        audioPlayed = true;
+      }).catch(function() {
+        // If autoplay policy blocks it, play on the first touch/click
+        var unlock = function() {
+          if (!audioPlayed) {
+            audio.play();
+            audioPlayed = true;
+          }
+          window.removeEventListener('click', unlock);
+          window.removeEventListener('touchstart', unlock);
+        };
+        window.addEventListener('click', unlock);
+        window.addEventListener('touchstart', unlock);
+      });
+    }
+  }
+
+  // Trigger precisely after 3 seconds
+  setTimeout(triggerAudio, 3000);
+
   var currentOrder = { name: '', price: '', upi: '', qr: '' };
 
   function openOrder(prodName, prodPrice, upiLink, qrLink) {
@@ -477,7 +507,7 @@ PAGE = """
     });
   }
 
-  // 3D Cylinder Background Simulation
+  // 3D Cylinder Simulation
   (function () {
     var bg = document.getElementById('intro-bg');
     var canvas = document.getElementById('cyl');
@@ -637,32 +667,4 @@ def save_order():
 
     order_entry = (
         f"----------------------------------------\n"
-        f"Time: {timestamp}\n"
-        f"Product: {product} ({price})\n"
-        f"Name: {cust_name}\n"
-        f"Phone: {phone}\n"
-        f"Address / Location: {address}\n"
-        f"----------------------------------------\n\n"
-    )
-
-    with open(ORDERS_FILE, "a", encoding="utf-8") as f:
-        f.write(order_entry)
-
-    return jsonify({"status": "ok"})
-
-@app.route("/orders")
-def view_orders():
-    """Browser viewer to check saved orders."""
-    if not os.path.exists(ORDERS_FILE):
-        return "<pre style='background:#111;color:#eee;padding:20px;'>No orders received yet.</pre>"
-    with open(ORDERS_FILE, "r", encoding="utf-8") as f:
-        content = f.read()
-    return f"<pre style='background:#111;color:#76ff03;padding:20px;font-family:monospace;white-space:pre-wrap;'>{content}</pre>"
-
-@app.route("/health")
-def health():
-    return "ok"
-
-if __name__ == "__main__":
-    app.run(debug=True)
-    
+        f"Time: 
