@@ -31,7 +31,7 @@
       overflow-x: hidden;
     }
 
-    /* 3D Canvas Layer */
+    /* 3D Canvas */
     #cyl {
       position: fixed;
       inset: 0;
@@ -40,26 +40,27 @@
       z-index: 100;
       pointer-events: none;
       display: block;
-      transition: z-index 0.3s ease;
+      transition: z-index 0.2s ease;
     }
     #cyl.back {
       z-index: 0;
     }
 
-    /* Intro Overlay Veil */
+    /* Intro Dark Veil */
     #intro-veil {
       position: fixed;
       inset: 0;
       background: #090305;
       z-index: 90;
-      transition: opacity 0.8s ease;
+      transition: opacity 0.5s ease;
       pointer-events: none;
     }
     #intro-veil.fade-out {
       opacity: 0;
+      visibility: hidden;
     }
 
-    /* Pop-up Button: "Tap to enjoy the Flavour !" */
+    /* "Tap to enjoy the Flavour !" Center Overlay */
     #flavor-gate {
       position: fixed;
       inset: 0;
@@ -68,13 +69,13 @@
       flex-direction: column;
       align-items: center;
       justify-content: center;
-      background: rgba(7, 3, 4, 0.82);
+      background: rgba(7, 3, 4, 0.85);
       backdrop-filter: blur(8px);
       padding: 20px;
     }
     #flavor-gate.active {
       display: flex;
-      animation: popIn 0.35s ease forwards;
+      animation: popIn 0.3s ease forwards;
     }
     .flavor-btn {
       background: var(--accent-gradient);
@@ -100,7 +101,7 @@
       to { opacity: 1; transform: scale(1); }
     }
 
-    /* Main Store Container */
+    /* Store Content */
     .container {
       position: relative;
       z-index: 10;
@@ -390,15 +391,15 @@
 </head>
 <body>
 
-  <!-- Background Music Audio Element -->
+  <!-- Audio Element -->
   <audio id="bgAudio" loop playsinline preload="auto">
     <source src="/static/intro_sound.mp3" type="audio/mpeg">
   </audio>
 
-  <!-- 3D Canvas (Starts in front at z-index: 100) -->
+  <!-- 3D Canvas -->
   <canvas id="cyl"></canvas>
 
-  <!-- Intro Background Veil -->
+  <!-- Dark Intro Veil -->
   <div id="intro-veil"></div>
 
   <!-- Pop-Up Button Gate -->
@@ -437,7 +438,7 @@
     </footer>
   </div>
 
-  <!-- Order Details & Payment Modal -->
+  <!-- Order Modal -->
   <div id="orderModal" class="modal-backdrop" onclick="closeModalOnBackdrop(event)">
     <div class="modal-box">
       <button class="close-btn" onclick="closeModal()">&times;</button>
@@ -496,6 +497,15 @@
   <script>
   var audio = document.getElementById('bgAudio');
   var gate = document.getElementById('flavor-gate');
+  var veil = document.getElementById('intro-veil');
+  var canvas = document.getElementById('cyl');
+
+  // Trigger button popup and veil removal precisely at 2.5 seconds
+  setTimeout(function() {
+    if (veil) veil.classList.add('fade-out');
+    if (canvas) canvas.className = 'back';
+    if (gate) gate.classList.add('active');
+  }, 2500);
 
   function startFlavorMusic() {
     if (audio) {
@@ -576,10 +586,8 @@
     });
   }
 
-  // 3D Cylinder Intro Sequence
+  // 3D Cylinder Render
   (function () {
-    var canvas = document.getElementById('cyl');
-    var veil = document.getElementById('intro-veil');
     if (typeof THREE === 'undefined' || !canvas) return;
 
     var renderer;
@@ -603,7 +611,6 @@
     fill.position.set(40, -30, -50);
     scene.add(fill);
 
-    // Initial procedural texture
     var c = document.createElement('canvas');
     c.width = 512;
     c.height = 512;
@@ -641,50 +648,12 @@
       camera.position.set(0, 0, d);
     }
 
-    function clamp01(x) { return Math.max(0, Math.min(1, x)); }
-    function ease(x) { return x < 0.5 ? 4 * x * x * x : 1 - Math.pow(-2 * x + 2, 3) / 2; }
-
-    var T_IN = 0.9, T_HOLD = 3.0, T_OUT = 3.8;
-    var BG_SCALE = 0.72, BG_OPACITY = 0.42;
-    var t0 = performance.now(), last = t0, spin = 0, lastY = window.scrollY || 0;
-    var finished = false;
-
-    function setLook(scale, opacity) {
-      pose.scale.set(scale, scale, scale);
-      side.opacity = opacity;
-      cap.opacity = opacity;
-    }
-
-    function frame(now) {
-      var t = (now - t0) / 1000;
-      var dt = Math.min(0.05, (now - last) / 1000);
-      last = now;
-
-      if (!finished) {
-                var p = ease(clamp01(t / T_IN));
-        var q = ease(clamp01((t - T_HOLD) / (T_OUT - T_HOLD)));
-        setLook((0.65 + 0.35 * p) * (1 - (1 - BG_SCALE) * q), (1 - (1 - BG_OPACITY) * q));
-        spin += (1.2 + 3.8 * (1 - p)) * dt;
-
-        if (t >= T_HOLD) {
-          if (veil) veil.classList.add('fade-out');
-          if (gate && !gate.classList.contains('active')) {
-            gate.classList.add('active');
-          }
-        }
-
-        if (t >= T_OUT) {
-          finished = true;
-          canvas.className = 'back';
-          if (veil) veil.style.display = 'none';
-          setLook(BG_SCALE, BG_OPACITY);
-        }
-      } else {
-        spin += 0.55 * dt;
-        var y = window.scrollY || 0;
-        spin += (y - lastY) * 0.008;
-        lastY = y;
-      }
+    var spin = 0, lastY = window.scrollY || 0;
+    function frame() {
+      spin += 0.016;
+      var y = window.scrollY || 0;
+      spin += (y - lastY) * 0.008;
+      lastY = y;
 
       mesh.rotation.y = spin;
       renderer.render(scene, camera);
