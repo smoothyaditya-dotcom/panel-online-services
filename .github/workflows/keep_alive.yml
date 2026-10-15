@@ -1,0 +1,32 @@
+name: Keep Alive
+
+on:
+  schedule:
+    # Runs every 5 minutes (minimum allowed by GitHub Actions cron)
+    - cron: '*/5 * * * *'
+  workflow_dispatch: # Allows manual trigger from GitHub Actions tab
+
+jobs:
+  keep-alive:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - name: Ping Keep-Alive Loop Every 20 Seconds
+        run: |
+          URL="https://panel-online-services.onrender.com/health"
+          echo "Starting keep-alive check for $URL..."
+
+          while true; do
+            STATUS=$(curl -s -o /dev/null -w "%{http_code}" "$URL" || true)
+            echo "$(date '+%Y-%m-%d %H:%M:%S') - Health check status: $STATUS"
+
+            if [ "$STATUS" -eq 200 ]; then
+              echo "Server is awake and active (HTTP 200)!"
+              exit 0
+            fi
+
+            echo "Server sleeping or spinning up (Status: $STATUS). Retrying in 20 seconds..."
+            sleep 20
+          done
+          
