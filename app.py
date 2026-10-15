@@ -644,21 +644,25 @@ def home():
 @app.route("/save_order", methods=["POST"])
 def save_order():
     data = request.get_json() or {}
-    cust_name = str(data.get("customer_name", "")).strip()
+    name = str(data.get("customer_name", "")).strip()
     phone = str(data.get("phone", "")).strip()
-    address = str(data.get("address", "")).strip()
-    product = str(data.get("product", "")).strip()
-    price = str(data.get("price", "")).strip()
-    timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+    addr = str(data.get("address", "")).strip()
+    prod = str(data.get("product", "")).strip()
+    prc = str(data.get("price", "")).strip()
+    now = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
 
-    entry = (
-        "----------------------------------------\n" +
-        "Time: " + timestamp + "\n" +
-        "Product: " + product + " (" + price + ")\n" +
-        "Name: " + cust_name + "\n" +
-        "Phone: " + phone + "\n" +
-        "Address / Location: " + address + "\n" +
-        "----------------------------------------\n\n"
-    )
+    log_line = "-" * 40 + "\n"
+    log_line += "Time: " + now + "\n"
+    log_line += "Product: " + prod + " (" + prc + ")\n"
+    log_line += "Name: " + name + "\n"
+    log_line += "Phone: " + phone + "\n"
+    log_line += "Address: " + addr + "\n"
+    log_line += "-" * 40 + "\n\n"
 
-    with open(ORDERS_FILE, "a", encoding="utf-8"
+    f = open(ORDERS_FILE, "a", encoding="utf-8")
+    f.write(log_line)
+    f.close()
+
+    return jsonify({"status": "ok"})
+
+@app.rou
