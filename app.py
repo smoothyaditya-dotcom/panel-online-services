@@ -4,7 +4,7 @@ from flask import Flask, render_template_string, request, jsonify
 
 app = Flask(__name__)
 
-# Product catalog with fixed prices and UPI links
+# Product catalog with fixed prices, UPI IDs, and dynamic QR codes
 PRODUCTS = [
     {
         "id": 1,
@@ -388,12 +388,11 @@ PAGE = """
     </footer>
   </div>
 
-  <!-- Order & Payment Modal -->
   <div id="orderModal" class="modal-backdrop" onclick="closeModalOnBackdrop(event)">
     <div class="modal-box">
       <button class="close-btn" onclick="closeModal()">&times;</button>
       
-      <!-- Step 1: Customer Details Form -->
+      <!-- Step 1: Delivery Details Form -->
       <div id="step-details">
         <h3 id="formTitle" style="color:#fff; font-size:1.2rem; margin-bottom:4px;">Delivery Details</h3>
         <p style="color:var(--text-sub); font-size:0.8rem; margin-bottom:16px;">Enter details for 20-30 mins delivery</p>
@@ -415,7 +414,7 @@ PAGE = """
         </form>
       </div>
 
-      <!-- Step 2: Payment Options -->
+      <!-- Step 2: Payment Gateway Options -->
       <div id="step-pay" style="display:none;">
         <h3 id="payTitle" style="color:#fff; font-size:1.15rem; margin-bottom:4px;"></h3>
         <p style="color:var(--text-sub); font-size:0.82rem; margin-bottom:10px;">Scan QR or click below to complete payment</p>
@@ -646,7 +645,6 @@ def save_order():
         f"----------------------------------------\n\n"
     )
 
-    # Automatically creates orders.txt if it doesn't exist
     with open(ORDERS_FILE, "a", encoding="utf-8") as f:
         f.write(order_entry)
 
@@ -654,7 +652,7 @@ def save_order():
 
 @app.route("/orders")
 def view_orders():
-    """Browser viewer to check your saved orders."""
+    """Browser viewer to check saved orders."""
     if not os.path.exists(ORDERS_FILE):
         return "<pre style='background:#111;color:#eee;padding:20px;'>No orders received yet.</pre>"
     with open(ORDERS_FILE, "r", encoding="utf-8") as f:
@@ -665,4 +663,6 @@ def view_orders():
 def health():
     return "ok"
 
-if __name__ == "__ma
+if __name__ == "__main__":
+    app.run(debug=True)
+    
