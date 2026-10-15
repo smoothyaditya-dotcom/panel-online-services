@@ -2,34 +2,34 @@ from flask import Flask, render_template_string
 
 app = Flask(__name__)
 
-# Products catalog: Set "live": True when ready to sell
+# Products catalog with fixed amounts and live UPI payment links & dynamic QR codes
 PRODUCTS = [
     {
         "id": 1,
-        "name": "Product 1",
-        "price": "₹30",
+        "name": "Panel",
+        "price": "₹20",
         "image": "/static/panel_artwork.jpg",
         "live": True,
-        "qr": "/static/upi-qr-rs30.png",
-        "upi_link": "upi://pay?pa=7276052050@fam&pn=PANEL%20OFFICIAL&am=30.00&cu=INR&tn=Panel%20Payment",
+        "upi_link": "upi://pay?pa=7276052050@fam&pn=PANEL%20OFFICIAL&am=20.00&cu=INR&tn=Panel%20Payment",
+        "qr": "https://api.qrserver.com/v1/create-qr-code/?size=250x250&data=upi%3A%2F%2Fpay%3Fpa%3D7276052050%40fam%26pn%3DPANEL%2520OFFICIAL%26am%3D20.00%26cu%3DINR%26tn%3DPanel%2520Payment",
     },
     {
         "id": 2,
-        "name": "Product 2",
-        "price": "₹99",
+        "name": "Panel Pro",
+        "price": "₹25",
         "image": "/static/panel_artwork.jpg",
-        "live": False,
-        "qr": "",
-        "upi_link": "",
+        "live": True,
+        "upi_link": "upi://pay?pa=7276052050@fam&pn=PANEL%20OFFICIAL&am=25.00&cu=INR&tn=Panel%20Pro%20Payment",
+        "qr": "https://api.qrserver.com/v1/create-qr-code/?size=250x250&data=upi%3A%2F%2Fpay%3Fpa%3D7276052050%40fam%26pn%3DPANEL%2520OFFICIAL%26am%3D25.00%26cu%3DINR%26tn%3DPanel%2520Pro%2520Payment",
     },
     {
         "id": 3,
-        "name": "Product 3",
-        "price": "₹149",
+        "name": "Panel Premium",
+        "price": "₹30",
         "image": "/static/panel_artwork.jpg",
-        "live": False,
-        "qr": "",
-        "upi_link": "",
+        "live": True,
+        "upi_link": "upi://pay?pa=7276052050@fam&pn=PANEL%20OFFICIAL&am=30.00&cu=INR&tn=Panel%20Premium%20Payment",
+        "qr": "https://api.qrserver.com/v1/create-qr-code/?size=250x250&data=upi%3A%2F%2Fpay%3Fpa%3D7276052050%40fam%26pn%3DPANEL%2520OFFICIAL%26am%3D30.00%26cu%3DINR%26tn%3DPanel%2520Premium%2520Payment",
     },
 ]
 
@@ -106,7 +106,7 @@ PAGE = """
       z-index: 10;
       max-width: 680px;
       margin: 0 auto;
-      padding: 40px 16px 80px;
+      padding: 40px 16px 40px;
     }
 
     /* Animated Brand Title */
@@ -254,11 +254,24 @@ PAGE = """
       border-color: rgba(255, 255, 255, 0.3);
     }
 
-    .btn-disabled {
-      background: rgba(255, 255, 255, 0.04);
+    /* Footer Credits */
+    .footer {
+      text-align: center;
+      margin-top: 48px;
+      padding-top: 24px;
+      border-top: 1px solid rgba(255, 255, 255, 0.08);
+    }
+
+    .footer-text {
+      font-size: 0.9rem;
+      font-weight: 600;
+      letter-spacing: 0.6px;
       color: var(--text-sub);
-      cursor: not-allowed;
-      border: 1px solid rgba(255, 255, 255, 0.06);
+    }
+
+    .footer-text span {
+      color: #ff4766;
+      font-weight: 700;
     }
 
     /* Pop-up Modal */
@@ -334,7 +347,7 @@ PAGE = """
   <div class="container">
     <header class="brand-header">
       <h1 class="brand-title">PANEL OFFICIAL</h1>
-      <div class="verified-badge">● INSTANT DELIVERY ACTIVE</div>
+      <div class="verified-badge">● 20-30 MINS DELIVERY ACTIVE</div>
     </header>
 
     <div class="catalog">
@@ -349,17 +362,18 @@ PAGE = """
             <div class="price-tag">{{ p.price }}</div>
           </div>
           <div class="action-group">
-            {% if p.live %}
-              <a href="{{ p.upi_link }}" class="btn btn-upi">Pay via UPI</a>
-              <button class="btn btn-qr" onclick="openQr('{{ p.qr }}', '{{ p.name }}', '{{ p.price }}')">Scan QR</button>
-            {% else %}
-              <span class="btn btn-disabled">Coming Soon</span>
-            {% endif %}
+            <a href="{{ p.upi_link }}" class="btn btn-upi">Pay via UPI</a>
+            <button class="btn btn-qr" onclick="openQr('{{ p.qr }}', '{{ p.name }}', '{{ p.price }}')">Scan QR</button>
           </div>
         </div>
       </div>
       {% endfor %}
     </div>
+
+    <!-- Footer Credits -->
+    <footer class="footer">
+      <p class="footer-text">A Brand By - <span>Vijay , Sachin and Shekhar</span></p>
+    </footer>
   </div>
 
   <!-- QR Modal Pop-up -->
