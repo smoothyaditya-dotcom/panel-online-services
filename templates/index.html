@@ -31,7 +31,6 @@
       overflow-x: hidden;
     }
 
-    /* "Tap to enjoy the Flavour !" Overlay Button */
     #flavor-gate {
       position: fixed;
       inset: 0;
@@ -288,7 +287,7 @@
     .modal-box {
       background: #140609;
       border: 1px solid rgba(255, 23, 68, 0.35);
-      padding: 28px 22px;
+      padding: 26px 20px;
       border-radius: 20px;
       text-align: center;
       max-width: 360px;
@@ -341,25 +340,59 @@
     }
 
     .modal-box img {
-      width: 210px;
-      height: 210px;
+      width: 185px;
+      height: 185px;
       border-radius: 12px;
       background: #ffffff;
       padding: 8px;
       box-shadow: 0 4px 14px rgba(0, 0, 0, 0.3);
-      margin: 12px auto;
+      margin: 8px auto;
       display: block;
+    }
+
+    .or-divider {
+      margin: 14px 0 10px;
+      display: flex;
+      align-items: center;
+      text-align: center;
+      color: var(--text-sub);
+      font-size: 0.72rem;
+      font-weight: 700;
+      letter-spacing: 1px;
+    }
+    .or-divider::before, .or-divider::after {
+      content: '';
+      flex: 1;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.12);
+    }
+    .or-divider:not(:empty)::before { margin-right: .6em; }
+    .or-divider:not(:empty)::after { margin-left: .6em; }
+
+    .btn-cod {
+      background: rgba(255, 255, 255, 0.05);
+      color: #ffadb9;
+      border: 1px dashed rgba(255, 30, 60, 0.45);
+      width: 100%;
+      padding: 11px;
+      border-radius: 10px;
+      font-size: 0.85rem;
+      font-weight: 700;
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+    .btn-cod:hover {
+      background: rgba(255, 23, 68, 0.12);
+      border-color: #ff1e3c;
+      color: #fff;
     }
   </style>
 </head>
 <body>
 
-  <!-- Audio Element (Loop enabled) -->
   <audio id="bgAudio" loop playsinline preload="auto">
     <source src="/static/intro_sound.mp3" type="audio/mpeg">
   </audio>
 
-  <!-- Button that appears after 3 seconds -->
   <div id="flavor-gate">
     <button class="flavor-btn" onclick="startFlavorMusic()">Tap to enjoy the Flavour !</button>
   </div>
@@ -385,8 +418,8 @@
             <div class="price-tag">{{ p.price }}</div>
           </div>
           <div class="action-group">
-            <button class="btn btn-upi" onclick="openOrder('{{ p.name }}', '{{ p.price }}', '{{ p.upi_link }}', '{{ p.qr }}')">Pay via UPI</button>
-            <button class="btn btn-qr" onclick="openOrder('{{ p.name }}', '{{ p.price }}', '{{ p.upi_link }}', '{{ p.qr }}')">Scan QR</button>
+            <button class="btn btn-upi" onclick="openOrder('{{ p.name }}', {{ p.num_price }}, '{{ p.upi_link }}', '{{ p.qr }}')">Pay via UPI</button>
+            <button class="btn btn-qr" onclick="openOrder('{{ p.name }}', {{ p.num_price }}, '{{ p.upi_link }}', '{{ p.qr }}')">Scan QR</button>
           </div>
         </div>
       </div>
@@ -402,6 +435,7 @@
     <div class="modal-box">
       <button class="close-btn" onclick="closeModal()">&times;</button>
       
+      <!-- Step 1: Customer Details Form -->
       <div id="step-details">
         <h3 id="formTitle" style="color:#fff; font-size:1.2rem; margin-bottom:4px;">Delivery Details</h3>
         <p style="color:var(--text-sub); font-size:0.8rem; margin-bottom:16px;">Enter details for 20-30 mins delivery</p>
@@ -419,16 +453,37 @@
             <label>Delivery Address / Location</label>
             <textarea id="custAddress" required placeholder="House / Flat / Area / Landmark"></textarea>
           </div>
-          <button type="submit" class="btn btn-upi" style="width:100%; margin-top:8px;">Proceed to Pay</button>
+          <button type="submit" class="btn btn-upi" style="width:100%; margin-top:8px;">Proceed to Payment</button>
         </form>
       </div>
 
+      <!-- Step 2: Pay Online OR Cash On Delivery -->
       <div id="step-pay" style="display:none;">
         <h3 id="payTitle" style="color:#fff; font-size:1.15rem; margin-bottom:4px;"></h3>
-        <p style="color:var(--text-sub); font-size:0.82rem; margin-bottom:10px;">Scan QR or click below to complete payment</p>
+        <p style="color:var(--text-sub); font-size:0.82rem; margin-bottom:6px;">Option 1: Pay Online</p>
+        
         <img id="payQrImg" src="" alt="Payment QR Code">
-        <a id="payUpiBtn" href="" class="btn btn-upi" style="width:100%; margin-top:8px;">Open UPI App to Pay</a>
+        <a id="payUpiBtn" href="" class="btn btn-upi" style="width:100%; margin-top:4px;">Pay via UPI App</a>
+
+        <div class="or-divider">OR</div>
+
+        <!-- Cash On Delivery Button -->
+        <button type="button" class="btn-cod" onclick="confirmCodOrder()">
+          💵 Cash On Delivery (+₹10 Extra)
+        </button>
       </div>
+
+      <!-- Step 3: COD Order Confirmed Message -->
+      <div id="step-cod-success" style="display:none;">
+        <h3 style="color:#4ade80; font-size:1.25rem; margin-bottom:8px;">✓ Order Placed!</h3>
+        <p style="color:#fff; font-size:0.95rem; margin-bottom:4px;" id="codProductInfo"></p>
+        <p style="color:var(--accent-red); font-size:1.2rem; font-weight:800; margin-bottom:12px;" id="codTotalInfo"></p>
+        <p style="color:var(--text-sub); font-size:0.82rem; line-height:1.5;">
+          Your order has been recorded. Delivery will arrive in 20-30 mins. Please keep cash ready.
+        </p>
+        <button class="btn btn-upi" style="width:100%; margin-top:16px;" onclick="closeModal()">Done</button>
+      </div>
+
     </div>
   </div>
 
@@ -437,7 +492,6 @@
   var audio = document.getElementById('bgAudio');
   var gate = document.getElementById('flavor-gate');
 
-  // Trigger the button precisely after 3 seconds
   setTimeout(function() {
     if (gate) gate.classList.add('show');
   }, 3000);
@@ -445,9 +499,7 @@
   function startFlavorMusic() {
     if (audio) {
       audio.volume = 1.0;
-      audio.play().catch(function(e) {
-        console.log("Audio play error:", e);
-      });
+      audio.play().catch(function(e) { console.log(e); });
     }
     if (gate) {
       gate.classList.remove('show');
@@ -455,13 +507,15 @@
     }
   }
 
-  var currentOrder = { name: '', price: '', upi: '', qr: '' };
+  var currentOrder = { name: '', basePrice: 0, upi: '', qr: '' };
+  var savedCustomer = { name: '', phone: '', address: '' };
 
-  function openOrder(prodName, prodPrice, upiLink, qrLink) {
-    currentOrder = { name: prodName, price: prodPrice, upi: upiLink, qr: qrLink };
-    document.getElementById('formTitle').innerText = prodName + ' (' + prodPrice + ')';
+  function openOrder(prodName, numPrice, upiLink, qrLink) {
+    currentOrder = { name: prodName, basePrice: numPrice, upi: upiLink, qr: qrLink };
+    document.getElementById('formTitle').innerText = prodName + ' (₹' + numPrice + ')';
     document.getElementById('step-details').style.display = 'block';
     document.getElementById('step-pay').style.display = 'none';
+    document.getElementById('step-cod-success').style.display = 'none';
     document.getElementById('orderModal').classList.add('active');
   }
 
@@ -475,33 +529,50 @@
 
   function submitDetails(e) {
     e.preventDefault();
-    var name = document.getElementById('custName').value.trim();
-    var phone = document.getElementById('custPhone').value.trim();
-    var address = document.getElementById('custAddress').value.trim();
+    savedCustomer.name = document.getElementById('custName').value.trim();
+    savedCustomer.phone = document.getElementById('custPhone').value.trim();
+    savedCustomer.address = document.getElementById('custAddress').value.trim();
 
     fetch('/save_order', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         product: currentOrder.name,
-        price: currentOrder.price,
-        customer_name: name,
-        phone: phone,
-        address: address
+        price: '₹' + currentOrder.basePrice,
+        payment_mode: 'Online (UPI/QR)',
+        customer_name: savedCustomer.name,
+        phone: savedCustomer.phone,
+        address: savedCustomer.address
+      })
+    });
+
+    document.getElementById('step-details').style.display = 'none';
+    document.getElementById('step-pay').style.display = 'block';
+    document.getElementById('payTitle').innerText = currentOrder.name + ' - ₹' + currentOrder.basePrice;
+    document.getElementById('payQrImg').src = currentOrder.qr;
+    document.getElementById('payUpiBtn').href = currentOrder.upi;
+  }
+
+  function confirmCodOrder() {
+    var codPrice = currentOrder.basePrice + 10;
+    fetch('/save_order', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        product: currentOrder.name,
+        price: '₹' + codPrice + ' (₹' + currentOrder.basePrice + ' + ₹10 COD)',
+        payment_mode: 'Cash On Delivery',
+        customer_name: savedCustomer.name,
+        phone: savedCustomer.phone,
+        address: savedCustomer.address
       })
     })
     .then(function(res) { return res.json(); })
     .then(function(data) {
-      if (data.status === 'ok') {
-        document.getElementById('step-details').style.display = 'none';
-        document.getElementById('step-pay').style.display = 'block';
-        document.getElementById('payTitle').innerText = currentOrder.name + ' - ' + currentOrder.price;
-        document.getElementById('payQrImg').src = currentOrder.qr;
-        document.getElementById('payUpiBtn').href = currentOrder.upi;
-      }
-    })
-    .catch(function(err) {
-      alert('Unable to process order. Please try again.');
+      document.getElementById('step-pay').style.display = 'none';
+      document.getElementById('step-cod-success').style.display = 'block';
+      document.getElementById('codProductInfo').innerText = currentOrder.name;
+      document.getElementById('codTotalInfo').innerText = 'Total: ₹' + codPrice + ' (Cash)';
     });
   }
 
@@ -590,56 +661,4 @@
       last = now;
 
       if (!finished) {
-        var p = ease(clamp01(t / T_IN));
-        var q = ease(clamp01((t - T_HOLD) / (T_OUT - T_HOLD)));
-        setLook((0.6 + 0.4 * p) * (1 - (1 - BG_SCALE) * q), p * (1 - (1 - BG_OPACITY) * q));
-        spin += (0.9 + 3.5 * (1 - p)) * dt;
-        if (!faded && t >= T_HOLD) {
-          faded = true;
-          bg.className = 'gone';
-        }
-        if (t >= T_OUT) { finish(); }
-      } else {
-        spin += 0.6 * dt;
-        if (now - lastDraw < 33) { requestAnimationFrame(frame); return; }
-      }
-
-      var y = window.scrollY || 0;
-      spin += (y - lastY) * 0.01;
-      lastY = y;
-      lastDraw = now;
-
-      mesh.rotation.y = spin;
-      renderer.render(scene, camera);
-      requestAnimationFrame(frame);
-    }
-
-    function begin() {
-      if (started) return;
-      started = true;
-      layout();
-      if (reduce) {
-        finish();
-        renderer.render(scene, camera);
-        window.addEventListener('resize', function () { layout(); renderer.render(scene, camera); });
-        return;
-      }
-      window.addEventListener('resize', layout);
-      t0 = performance.now();
-      last = t0;
-      requestAnimationFrame(frame);
-    }
-
-    function useTexture(tex) {
-      tex.encoding = THREE.sRGBEncoding;
-      tex.anisotropy = renderer.capabilities.getMaxAnisotropy();
-      side.map = tex;
-      side.needsUpdate = true;
-      begin();
-    }
-
-    new THREE.TextureLoader().load('/static/panel_artwork.jpg', useTexture);
-  })();
-  </script>
-</body>
-</html>
+        var p = ease(clamp01(t / T_
