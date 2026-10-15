@@ -31,6 +31,51 @@
       overflow-x: hidden;
     }
 
+    /* "Tap to enjoy the Flavour !" Overlay Button */
+    #flavor-gate {
+      position: fixed;
+      inset: 0;
+      z-index: 1000;
+      background: rgba(7, 3, 4, 0.85);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      opacity: 0;
+      visibility: hidden;
+      transition: opacity 0.6s ease, visibility 0.6s ease;
+      backdrop-filter: blur(6px);
+      padding: 20px;
+    }
+    #flavor-gate.show {
+      opacity: 1;
+      visibility: visible;
+    }
+    #flavor-gate.hide {
+      opacity: 0;
+      visibility: hidden;
+      pointer-events: none;
+    }
+    .flavor-btn {
+      background: var(--accent-gradient);
+      color: #ffffff;
+      font-family: inherit;
+      font-weight: 800;
+      font-size: 1.15rem;
+      letter-spacing: 1px;
+      padding: 16px 36px;
+      border-radius: 999px;
+      border: 2px solid rgba(255, 255, 255, 0.25);
+      box-shadow: 0 0 35px rgba(255, 23, 68, 0.65);
+      cursor: pointer;
+      animation: pulseBtn 1.8s infinite;
+      text-align: center;
+    }
+    @keyframes pulseBtn {
+      0%, 100% { transform: scale(1); box-shadow: 0 0 30px rgba(255, 23, 68, 0.6); }
+      50% { transform: scale(1.05); box-shadow: 0 0 45px rgba(255, 23, 68, 0.95); }
+    }
+
     #intro-bg {
       position: fixed;
       inset: 0;
@@ -309,10 +354,15 @@
 </head>
 <body>
 
-  <!-- Background Music Audio Element -->
+  <!-- Audio Element (Loop enabled) -->
   <audio id="bgAudio" loop playsinline preload="auto">
     <source src="/static/intro_sound.mp3" type="audio/mpeg">
   </audio>
+
+  <!-- Button that appears after 3 seconds -->
+  <div id="flavor-gate">
+    <button class="flavor-btn" onclick="startFlavorMusic()">Tap to enjoy the Flavour !</button>
+  </div>
 
   <div id="intro-bg" aria-hidden="true"></div>
   <canvas id="cyl" aria-hidden="true"></canvas>
@@ -384,41 +434,30 @@
 
   <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
   <script>
-  // High-reliability audio loop with Web Audio API unlock
   var audio = document.getElementById('bgAudio');
-  var isAudioStarted = false;
+  var gate = document.getElementById('flavor-gate');
 
-  function playLoop() {
-    if (isAudioStarted || !audio) return;
-    audio.play().then(function() {
-      isAudioStarted = true;
-    }).catch(function() {
-      // Browser blocked autoplay: attach one-time unlock listeners
-      var unlock = function() {
-        if (!isAudioStarted && audio) {
-          audio.play().then(function() {
-            isAudioStarted = true;
-          });
-        }
-        ['click', 'touchstart', 'touchend', 'scroll'].forEach(function(evt) {
-          document.removeEventListener(evt, unlock);
-        });
-      };
+  // Trigger the button precisely after 3 seconds
+  setTimeout(function() {
+    if (gate) gate.classList.add('show');
+  }, 3000);
 
-      ['click', 'touchstart', 'touchend', 'scroll'].forEach(function(evt) {
-        document.addEventListener(evt, unlock, { passive: true, once: true });
+  function startFlavorMusic() {
+    if (audio) {
+      audio.volume = 1.0;
+      audio.play().catch(function(e) {
+        console.log("Audio play error:", e);
       });
-    });
+    }
+    if (gate) {
+      gate.classList.remove('show');
+      gate.classList.add('hide');
+    }
   }
-
-  // Attempt initial playback immediately and upon full load
-  playLoop();
-  window.addEventListener('load', playLoop);
 
   var currentOrder = { name: '', price: '', upi: '', qr: '' };
 
   function openOrder(prodName, prodPrice, upiLink, qrLink) {
-    playLoop(); // Fallback trigger on interaction
     currentOrder = { name: prodName, price: prodPrice, upi: upiLink, qr: qrLink };
     document.getElementById('formTitle').innerText = prodName + ' (' + prodPrice + ')';
     document.getElementById('step-details').style.display = 'block';
