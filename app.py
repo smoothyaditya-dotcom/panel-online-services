@@ -11,7 +11,7 @@ PRODUCTS = [
         "id": 1,
         "name": "Panel",
         "price": "₹20",
-        "image": f"{BASE_URL}/static/panel_artwork.jpg",
+        "image": BASE_URL + "/static/panel_artwork.jpg",
         "live": True,
         "upi_link": "upi://pay?pa=7276052050@fam&pn=PANEL%20OFFICIAL&am=20.00&cu=INR&tn=Panel%20Payment",
         "qr": "https://api.qrserver.com/v1/create-qr-code/?size=250x250&data=upi%3A%2F%2Fpay%3Fpa%3D7276052050%40fam%26pn%3DPANEL%2520OFFICIAL%26am%3D20.00%26cu%3DINR%26tn%3DPanel%2520Payment",
@@ -20,7 +20,7 @@ PRODUCTS = [
         "id": 2,
         "name": "Panel Pro",
         "price": "₹25",
-        "image": f"{BASE_URL}/static/panel_artwork.jpg",
+        "image": BASE_URL + "/static/panel_artwork.jpg",
         "live": True,
         "upi_link": "upi://pay?pa=7276052050@fam&pn=PANEL%20OFFICIAL&am=25.00&cu=INR&tn=Panel%20Pro%20Payment",
         "qr": "https://api.qrserver.com/v1/create-qr-code/?size=250x250&data=upi%3A%2F%2Fpay%3Fpa%3D7276052050%40fam%26pn%3DPANEL%2520OFFICIAL%26am%3D25.00%26cu%3DINR%26tn%3DPanel%2520Pro%2520Payment",
@@ -29,7 +29,7 @@ PRODUCTS = [
         "id": 3,
         "name": "Panel Premium",
         "price": "₹30",
-        "image": f"{BASE_URL}/static/panel_artwork.jpg",
+        "image": BASE_URL + "/static/panel_artwork.jpg",
         "live": True,
         "upi_link": "upi://pay?pa=7276052050@fam&pn=PANEL%20OFFICIAL&am=30.00&cu=INR&tn=Panel%20Premium%20Payment",
         "qr": "https://api.qrserver.com/v1/create-qr-code/?size=250x250&data=upi%3A%2F%2Fpay%3Fpa%3D7276052050%40fam%26pn%3DPANEL%2520OFFICIAL%26am%3D30.00%26cu%3DINR%26tn%3DPanel%2520Premium%2520Payment",
@@ -78,10 +78,7 @@ PAGE = """
       transition: opacity 0.9s cubic-bezier(0.4, 0, 0.2, 1);
       animation: failsafe 0.5s 9s forwards;
     }
-    #intro-bg.gone {
-      opacity: 0;
-      pointer-events: none;
-    }
+    #intro-bg.gone { opacity: 0; pointer-events: none; }
 
     #cyl {
       position: fixed;
@@ -93,9 +90,7 @@ PAGE = """
       display: block;
       transition: z-index 0.1s ease;
     }
-    #cyl.back {
-      z-index: 0;
-    }
+    #cyl.back { z-index: 0; }
 
     @keyframes failsafe {
       to { opacity: 0; visibility: hidden; }
@@ -282,9 +277,7 @@ PAGE = """
       padding: 20px;
     }
 
-    .modal-backdrop.active {
-      display: flex;
-    }
+    .modal-backdrop.active { display: flex; }
 
     .modal-box {
       background: #140609;
@@ -355,9 +348,7 @@ PAGE = """
 </head>
 <body>
 
-  <!-- Audio Element (Intro Sound) -->
   <audio id="introAudio" src="/static/intro_sound.mp3" preload="auto"></audio>
-
   <div id="intro-bg" aria-hidden="true"></div>
   <canvas id="cyl" aria-hidden="true"></canvas>
 
@@ -392,7 +383,6 @@ PAGE = """
     </footer>
   </div>
 
-  <!-- Order & Payment Modal -->
   <div id="orderModal" class="modal-backdrop" onclick="closeModalOnBackdrop(event)">
     <div class="modal-box">
       <button class="close-btn" onclick="closeModal()">&times;</button>
@@ -430,7 +420,6 @@ PAGE = """
   <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
   {% raw %}
   <script>
-  // Play sound after 3 seconds with user interaction fallback for mobile browsers
   var audioPlayed = false;
   function triggerAudio() {
     if (audioPlayed) return;
@@ -439,7 +428,6 @@ PAGE = """
       audio.play().then(function() {
         audioPlayed = true;
       }).catch(function() {
-        // If autoplay policy blocks it, play on the first touch/click
         var unlock = function() {
           if (!audioPlayed) {
             audio.play();
@@ -454,7 +442,6 @@ PAGE = """
     }
   }
 
-  // Trigger precisely after 3 seconds
   setTimeout(triggerAudio, 3000);
 
   var currentOrder = { name: '', price: '', upi: '', qr: '' };
@@ -507,7 +494,6 @@ PAGE = """
     });
   }
 
-  // 3D Cylinder Simulation
   (function () {
     var bg = document.getElementById('intro-bg');
     var canvas = document.getElementById('cyl');
@@ -658,13 +644,21 @@ def home():
 @app.route("/save_order", methods=["POST"])
 def save_order():
     data = request.get_json() or {}
-    cust_name = data.get("customer_name", "").strip()
-    phone = data.get("phone", "").strip()
-    address = data.get("address", "").strip()
-    product = data.get("product", "").strip()
-    price = data.get("price", "").strip()
+    cust_name = str(data.get("customer_name", "")).strip()
+    phone = str(data.get("phone", "")).strip()
+    address = str(data.get("address", "")).strip()
+    product = str(data.get("product", "")).strip()
+    price = str(data.get("price", "")).strip()
     timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
 
-    order_entry = (
-        f"----------------------------------------\n"
-        f"Time: 
+    entry = (
+        "----------------------------------------\n" +
+        "Time: " + timestamp + "\n" +
+        "Product: " + product + " (" + price + ")\n" +
+        "Name: " + cust_name + "\n" +
+        "Phone: " + phone + "\n" +
+        "Address / Location: " + address + "\n" +
+        "----------------------------------------\n\n"
+    )
+
+    with open(ORDERS_FILE, "a", encoding="utf-8"
