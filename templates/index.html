@@ -309,7 +309,9 @@
 </head>
 <body>
 
-  <audio id="introAudio" src="/static/intro_sound.mp3" preload="auto"></audio>
+  <!-- Audio Element -->
+  <audio id="introAudio" src="/static/intro_sound.mp3" preload="auto" playsinline></audio>
+
   <div id="intro-bg" aria-hidden="true"></div>
   <canvas id="cyl" aria-hidden="true"></canvas>
 
@@ -380,29 +382,36 @@
 
   <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
   <script>
-  var audioPlayed = false;
-  function triggerAudio() {
-    if (audioPlayed) return;
-    var audio = document.getElementById('introAudio');
-    if (audio) {
-      audio.play().then(function() {
-        audioPlayed = true;
-      }).catch(function() {
-        var unlock = function() {
-          if (!audioPlayed) {
-            audio.play();
-            audioPlayed = true;
-          }
-          window.removeEventListener('click', unlock);
-          window.removeEventListener('touchstart', unlock);
-        };
-        window.addEventListener('click', unlock);
-        window.addEventListener('touchstart', unlock);
-      });
-    }
+  // Robust Audio Player with Browser Autoplay Unlocker
+  var audio = document.getElementById('introAudio');
+  var hasPlayed = false;
+
+  function playSound() {
+    if (hasPlayed || !audio) return;
+    audio.play().then(function() {
+      hasPlayed = true;
+    }).catch(function() {
+      // Browser blocked unmuted autoplay - listen for the very first interaction
+      var unlockAudio = function() {
+        if (!hasPlayed) {
+          audio.play();
+          hasPlayed = true;
+        }
+        document.removeEventListener('click', unlockAudio);
+        document.removeEventListener('touchstart', unlockAudio);
+        document.removeEventListener('scroll', unlockAudio);
+      };
+      document.addEventListener('click', unlockAudio, { once: true });
+      document.addEventListener('touchstart', unlockAudio, { once: true });
+      document.addEventListener('scroll', unlockAudio, { once: true });
+    });
   }
 
-  setTimeout(triggerAudio, 3000);
+  // Preload sound and trigger at exactly 3 seconds
+  window.addEventListener('load', function() {
+    if (audio) audio.load();
+    setTimeout(playSound, 3000);
+  });
 
   var currentOrder = { name: '', price: '', upi: '', qr: '' };
 
@@ -591,5 +600,4 @@
   })();
   </script>
 </body>
-            </html>
-            
+</html>
