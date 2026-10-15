@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>PANEL OFFICIAL</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -17,9 +17,7 @@
       --text-main: #f8fafc;
       --text-sub: #94a3b8;
     }
-
     * { box-sizing: border-box; margin: 0; padding: 0; }
-
     body {
       background-color: var(--bg);
       background-image: 
@@ -31,7 +29,7 @@
       overflow-x: hidden;
     }
 
-    /* 3D Canvas */
+    /* 3D Cylinder Canvas starts at the front for the 5-second intro */
     #cyl {
       position: fixed;
       inset: 0;
@@ -42,25 +40,9 @@
       display: block;
       transition: z-index 0.2s ease;
     }
-    #cyl.back {
-      z-index: 0;
-    }
+    #cyl.back { z-index: 0; }
 
-    /* Intro Dark Veil */
-    #intro-veil {
-      position: fixed;
-      inset: 0;
-      background: #090305;
-      z-index: 90;
-      transition: opacity 0.5s ease;
-      pointer-events: none;
-    }
-    #intro-veil.fade-out {
-      opacity: 0;
-      visibility: hidden;
-    }
-
-    /* "Tap to enjoy the Flavour !" Center Overlay */
+    /* Pop-up Button: Appears precisely at 5 seconds */
     #flavor-gate {
       position: fixed;
       inset: 0;
@@ -73,10 +55,7 @@
       backdrop-filter: blur(8px);
       padding: 20px;
     }
-    #flavor-gate.active {
-      display: flex;
-      animation: popIn 0.3s ease forwards;
-    }
+    #flavor-gate.active { display: flex; }
     .flavor-btn {
       background: var(--accent-gradient);
       color: #ffffff;
@@ -96,12 +75,8 @@
       0%, 100% { transform: scale(1); box-shadow: 0 0 30px rgba(255, 23, 68, 0.7); }
       50% { transform: scale(1.05); box-shadow: 0 0 50px rgba(255, 23, 68, 1); }
     }
-    @keyframes popIn {
-      from { opacity: 0; transform: scale(0.9); }
-      to { opacity: 1; transform: scale(1); }
-    }
 
-    /* Store Content */
+    /* Store Container */
     .container {
       position: relative;
       z-index: 10;
@@ -109,12 +84,7 @@
       margin: 0 auto;
       padding: 40px 16px 40px;
     }
-
-    .brand-header {
-      text-align: center;
-      margin-bottom: 36px;
-    }
-
+    .brand-header { text-align: center; margin-bottom: 36px; }
     .brand-title {
       font-size: 2.85rem;
       font-weight: 800;
@@ -126,11 +96,7 @@
       animation: shine 4s linear infinite;
       text-shadow: 0 0 35px rgba(255, 23, 68, 0.45);
     }
-
-    @keyframes shine {
-      to { background-position: 200% center; }
-    }
-
+    @keyframes shine { to { background-position: 200% center; } }
     .verified-badge {
       display: inline-flex;
       align-items: center;
@@ -145,13 +111,7 @@
       color: #ff5252;
       letter-spacing: 0.5px;
     }
-
-    .catalog {
-      display: flex;
-      flex-direction: column;
-      gap: 24px;
-    }
-
+    .catalog { display: flex; flex-direction: column; gap: 24px; }
     .card {
       background: var(--card-bg);
       border: 1px solid var(--card-border);
@@ -159,33 +119,11 @@
       overflow: hidden;
       backdrop-filter: blur(14px);
       box-shadow: 0 10px 30px rgba(0, 0, 0, 0.55);
-      transition: transform 0.25s ease, border-color 0.25s ease, box-shadow 0.25s ease;
+      transition: transform 0.25s ease, border-color 0.25s ease;
     }
-
-    .card:hover {
-      transform: translateY(-3px);
-      border-color: rgba(255, 23, 68, 0.5);
-      box-shadow: 0 16px 36px rgba(255, 23, 68, 0.25);
-    }
-
-    .image-wrapper {
-      width: 100%;
-      height: 220px;
-      background: #120406;
-      overflow: hidden;
-    }
-
-    .image-wrapper img {
-      width: 100%;
-      height: 100%;
-      object-fit: cover;
-      transition: transform 0.4s ease;
-    }
-
-    .card:hover .image-wrapper img {
-      transform: scale(1.04);
-    }
-
+    .card:hover { transform: translateY(-3px); border-color: rgba(255, 23, 68, 0.5); }
+    .image-wrapper { width: 100%; height: 220px; background: #120406; overflow: hidden; }
+    .image-wrapper img { width: 100%; height: 100%; object-fit: cover; }
     .card-body {
       padding: 20px;
       display: flex;
@@ -194,215 +132,65 @@
       flex-wrap: wrap;
       gap: 16px;
     }
-
-    .card-details h2 {
-      font-size: 1.35rem;
-      font-weight: 700;
-      color: #ffffff;
-      margin-bottom: 4px;
-    }
-
-    .price-tag {
-      font-size: 1.45rem;
-      font-weight: 800;
-      color: #ff3366;
-    }
-
-    .action-group {
-      display: flex;
-      gap: 10px;
-      flex-wrap: wrap;
-    }
-
+    .card-details h2 { font-size: 1.35rem; font-weight: 700; color: #fff; margin-bottom: 4px; }
+    .price-tag { font-size: 1.45rem; font-weight: 800; color: #ff3366; }
+    .action-group { display: flex; gap: 10px; flex-wrap: wrap; }
     .btn {
-      font-family: inherit;
-      font-size: 0.85rem;
-      font-weight: 700;
-      padding: 10px 18px;
-      border-radius: 10px;
-      border: none;
-      cursor: pointer;
-      text-decoration: none;
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      transition: all 0.2s ease;
+      font-family: inherit; font-size: 0.85rem; font-weight: 700; padding: 10px 18px;
+      border-radius: 10px; border: none; cursor: pointer; text-decoration: none;
+      display: inline-flex; align-items: center; justify-content: center;
     }
-
     .btn-upi {
-      background: var(--accent-gradient);
-      color: #ffffff;
+      background: var(--accent-gradient); color: #fff;
       box-shadow: 0 4px 14px rgba(255, 23, 68, 0.35);
     }
-
-    .btn-upi:hover {
-      opacity: 0.95;
-      transform: scale(1.02);
-      box-shadow: 0 6px 18px rgba(255, 23, 68, 0.55);
-    }
-
     .btn-qr {
-      background: rgba(255, 255, 255, 0.08);
-      color: #e2e8f0;
+      background: rgba(255, 255, 255, 0.08); color: #e2e8f0;
       border: 1px solid rgba(255, 255, 255, 0.16);
     }
+    .footer { text-align: center; margin-top: 48px; padding-top: 24px; border-top: 1px solid rgba(255, 255, 255, 0.08); }
+    .footer-text { font-size: 0.9rem; font-weight: 600; color: var(--text-sub); }
+    .footer-text span { color: #ff4766; font-weight: 700; }
 
-    .btn-qr:hover {
-      background: rgba(255, 255, 255, 0.14);
-      border-color: rgba(255, 255, 255, 0.3);
-    }
-
-    .footer {
-      text-align: center;
-      margin-top: 48px;
-      padding-top: 24px;
-      border-top: 1px solid rgba(255, 255, 255, 0.08);
-    }
-
-    .footer-text {
-      font-size: 0.9rem;
-      font-weight: 600;
-      letter-spacing: 0.6px;
-      color: var(--text-sub);
-    }
-
-    .footer-text span {
-      color: #ff4766;
-      font-weight: 700;
-    }
-
-    /* Modal Styling */
+    /* Modal */
     .modal-backdrop {
-      display: none;
-      position: fixed;
-      inset: 0;
-      background: rgba(0, 0, 0, 0.82);
-      backdrop-filter: blur(8px);
-      z-index: 1000;
-      align-items: center;
-      justify-content: center;
-      padding: 20px;
+      display: none; position: fixed; inset: 0; background: rgba(0, 0, 0, 0.82);
+      backdrop-filter: blur(8px); z-index: 1000; align-items: center; justify-content: center; padding: 20px;
     }
-
     .modal-backdrop.active { display: flex; }
-
     .modal-box {
-      background: #140609;
-      border: 1px solid rgba(255, 23, 68, 0.35);
-      padding: 26px 20px;
-      border-radius: 20px;
-      text-align: center;
-      max-width: 360px;
-      width: 100%;
-      box-shadow: 0 20px 40px rgba(0, 0, 0, 0.85);
-      position: relative;
+      background: #140609; border: 1px solid rgba(255, 23, 68, 0.35); padding: 26px 20px;
+      border-radius: 20px; text-align: center; max-width: 360px; width: 100%; position: relative;
     }
-
-    .close-btn {
-      position: absolute;
-      top: 12px;
-      right: 14px;
-      background: none;
-      border: none;
-      color: var(--text-sub);
-      font-size: 1.4rem;
-      cursor: pointer;
-    }
-    .close-btn:hover { color: #fff; }
-
-    .input-group {
-      text-align: left;
-      margin-bottom: 14px;
-    }
-    .input-group label {
-      display: block;
-      font-size: 0.78rem;
-      font-weight: 600;
-      color: var(--text-sub);
-      margin-bottom: 5px;
-    }
+    .close-btn { position: absolute; top: 12px; right: 14px; background: none; border: none; color: var(--text-sub); font-size: 1.4rem; cursor: pointer; }
+    .input-group { text-align: left; margin-bottom: 14px; }
+    .input-group label { display: block; font-size: 0.78rem; font-weight: 600; color: var(--text-sub); margin-bottom: 5px; }
     .input-group input, .input-group textarea {
-      width: 100%;
-      background: rgba(255, 255, 255, 0.05);
-      border: 1px solid rgba(255, 255, 255, 0.15);
-      border-radius: 8px;
-      padding: 10px 12px;
-      color: #ffffff;
-      font-family: inherit;
-      font-size: 0.88rem;
-      outline: none;
+      width: 100%; background: rgba(255, 255, 255, 0.05); border: 1px solid rgba(255, 255, 255, 0.15);
+      border-radius: 8px; padding: 10px 12px; color: #fff; font-family: inherit; font-size: 0.88rem; outline: none;
     }
-    .input-group input:focus, .input-group textarea:focus {
-      border-color: #ff1e3c;
-      box-shadow: 0 0 10px rgba(255, 30, 60, 0.3);
-    }
-    .input-group textarea {
-      resize: vertical;
-      min-height: 65px;
-    }
-
-    .modal-box img {
-      width: 185px;
-      height: 185px;
-      border-radius: 12px;
-      background: #ffffff;
-      padding: 8px;
-      box-shadow: 0 4px 14px rgba(0, 0, 0, 0.3);
-      margin: 8px auto;
-      display: block;
-    }
-
-    .or-divider {
-      margin: 14px 0 10px;
-      display: flex;
-      align-items: center;
-      text-align: center;
-      color: var(--text-sub);
-      font-size: 0.72rem;
-      font-weight: 700;
-      letter-spacing: 1px;
-    }
-    .or-divider::before, .or-divider::after {
-      content: '';
-      flex: 1;
-      border-bottom: 1px solid rgba(255, 255, 255, 0.12);
-    }
+    .modal-box img { width: 185px; height: 185px; border-radius: 12px; background: #fff; padding: 8px; margin: 8px auto; display: block; }
+    .or-divider { margin: 14px 0 10px; display: flex; align-items: center; text-align: center; color: var(--text-sub); font-size: 0.72rem; font-weight: 700; }
+    .or-divider::before, .or-divider::after { content: ''; flex: 1; border-bottom: 1px solid rgba(255, 255, 255, 0.12); }
     .or-divider:not(:empty)::before { margin-right: .6em; }
     .or-divider:not(:empty)::after { margin-left: .6em; }
-
     .btn-cod {
-      background: rgba(255, 255, 255, 0.05);
-      color: #ffadb9;
-      border: 1px dashed rgba(255, 30, 60, 0.45);
-      width: 100%;
-      padding: 11px;
-      border-radius: 10px;
-      font-size: 0.85rem;
-      font-weight: 700;
-      cursor: pointer;
-      transition: all 0.2s ease;
-    }
-    .btn-cod:hover {
-      background: rgba(255, 23, 68, 0.12);
-      border-color: #ff1e3c;
-      color: #fff;
+      background: rgba(255, 255, 255, 0.05); color: #ffadb9; border: 1px dashed rgba(255, 30, 60, 0.45);
+      width: 100%; padding: 11px; border-radius: 10px; font-size: 0.85rem; font-weight: 700; cursor: pointer;
     }
   </style>
 </head>
 <body>
 
-  <!-- Audio Element -->
+  <!-- Background Audio Loop -->
   <audio id="bgAudio" loop playsinline preload="auto">
     <source src="/static/intro_sound.mp3" type="audio/mpeg">
   </audio>
 
-  <!-- 3D Canvas -->
+  <!-- 3D Cylinder Canvas -->
   <canvas id="cyl"></canvas>
 
-  <!-- Dark Intro Veil -->
-  <div id="intro-veil"></div>
-
-  <!-- Pop-Up Button Gate -->
+  <!-- Button Overlay Pop-up -->
   <div id="flavor-gate">
     <button class="flavor-btn" onclick="startFlavorMusic()">Tap to enjoy the Flavour !</button>
   </div>
@@ -442,12 +230,9 @@
   <div id="orderModal" class="modal-backdrop" onclick="closeModalOnBackdrop(event)">
     <div class="modal-box">
       <button class="close-btn" onclick="closeModal()">&times;</button>
-      
-      <!-- Step 1: Customer Details -->
       <div id="step-details">
         <h3 id="formTitle" style="color:#fff; font-size:1.2rem; margin-bottom:4px;">Delivery Details</h3>
         <p style="color:var(--text-sub); font-size:0.8rem; margin-bottom:16px;">Enter details for 20-30 mins delivery</p>
-        
         <form id="orderForm" onsubmit="submitDetails(event)">
           <div class="input-group">
             <label>Full Name</label>
@@ -465,29 +250,20 @@
         </form>
       </div>
 
-      <!-- Step 2: Pay Online OR COD -->
       <div id="step-pay" style="display:none;">
         <h3 id="payTitle" style="color:#fff; font-size:1.15rem; margin-bottom:4px;"></h3>
         <p style="color:var(--text-sub); font-size:0.82rem; margin-bottom:6px;">Option 1: Pay Online</p>
-        
         <img id="payQrImg" src="" alt="Payment QR Code">
         <a id="payUpiBtn" href="" class="btn btn-upi" style="width:100%; margin-top:4px;">Pay via UPI App</a>
-
         <div class="or-divider">OR</div>
-
-        <button type="button" class="btn-cod" onclick="confirmCodOrder()">
-          💵 Cash On Delivery (+₹10 Extra)
-        </button>
+        <button type="button" class="btn-cod" onclick="confirmCodOrder()">💵 Cash On Delivery (+₹10 Extra)</button>
       </div>
 
-      <!-- Step 3: COD Order Confirmed Screen -->
       <div id="step-cod-success" style="display:none;">
         <h3 style="color:#4ade80; font-size:1.25rem; margin-bottom:8px;">✓ Order Placed!</h3>
         <p style="color:#fff; font-size:0.95rem; margin-bottom:4px;" id="codProductInfo"></p>
         <p style="color:var(--accent-red); font-size:1.2rem; font-weight:800; margin-bottom:12px;" id="codTotalInfo"></p>
-        <p style="color:var(--text-sub); font-size:0.82rem; line-height:1.5;">
-          Your order has been recorded. Delivery will arrive in 20-30 mins. Please keep cash ready.
-        </p>
+        <p style="color:var(--text-sub); font-size:0.82rem; line-height:1.5;">Your order has been recorded. Delivery will arrive in 20-30 mins. Please keep cash ready.</p>
         <button class="btn btn-upi" style="width:100%; margin-top:16px;" onclick="closeModal()">Done</button>
       </div>
     </div>
@@ -497,24 +273,20 @@
   <script>
   var audio = document.getElementById('bgAudio');
   var gate = document.getElementById('flavor-gate');
-  var veil = document.getElementById('intro-veil');
   var canvas = document.getElementById('cyl');
 
-  // Trigger button popup and veil removal precisely at 2.5 seconds
+  // Trigger button popup and send cylinder to background at exactly 5 seconds
   setTimeout(function() {
-    if (veil) veil.classList.add('fade-out');
     if (canvas) canvas.className = 'back';
     if (gate) gate.classList.add('active');
-  }, 2500);
+  }, 5000);
 
   function startFlavorMusic() {
     if (audio) {
       audio.volume = 1.0;
       audio.play().catch(function(e) { console.log(e); });
     }
-    if (gate) {
-      gate.classList.remove('active');
-    }
+    if (gate) gate.classList.remove('active');
   }
 
   var currentOrder = { name: '', basePrice: 0, upi: '', qr: '' };
@@ -528,14 +300,8 @@
     document.getElementById('step-cod-success').style.display = 'none';
     document.getElementById('orderModal').classList.add('active');
   }
-
-  function closeModal() {
-    document.getElementById('orderModal').classList.remove('active');
-  }
-
-  function closeModalOnBackdrop(e) {
-    if (e.target.id === 'orderModal') closeModal();
-  }
+  function closeModal() { document.getElementById('orderModal').classList.remove('active'); }
+  function closeModalOnBackdrop(e) { if (e.target.id === 'orderModal') closeModal(); }
 
   function submitDetails(e) {
     e.preventDefault();
@@ -607,30 +373,20 @@
     key.position.set(-40, 60, 80);
     scene.add(key);
 
-    var fill = new THREE.DirectionalLight(0xffffff, 0.7);
-    fill.position.set(40, -30, -50);
-    scene.add(fill);
-
     var c = document.createElement('canvas');
-    c.width = 512;
-    c.height = 512;
+    c.width = 512; c.height = 512;
     var ctx = c.getContext('2d');
     var grad = ctx.createLinearGradient(0, 0, 512, 512);
-    grad.addColorStop(0, '#990c1e');
-    grad.addColorStop(1, '#1a0507');
-    ctx.fillStyle = grad;
-    ctx.fillRect(0, 0, 512, 512);
+    grad.addColorStop(0, '#990c1e'); grad.addColorStop(1, '#1a0507');
+    ctx.fillStyle = grad; ctx.fillRect(0, 0, 512, 512);
     var instantTexture = new THREE.CanvasTexture(c);
 
     var side = new THREE.MeshStandardMaterial({ map: instantTexture, roughness: 0.35, metalness: 0.1, transparent: true });
     var cap = new THREE.MeshStandardMaterial({ color: 0x140407, roughness: 0.6 });
     var mesh = new THREE.Mesh(new THREE.CylinderGeometry(R, R, L, 64, 1), [side, cap, cap]);
 
-    var tilt = new THREE.Group();
-    tilt.add(mesh);
-    var pose = new THREE.Group();
-    pose.rotation.x = 0.3;
-    pose.add(tilt);
+    var tilt = new THREE.Group(); tilt.add(mesh);
+    var pose = new THREE.Group(); pose.rotation.x = 0.3; pose.add(tilt);
     scene.add(pose);
 
     function layout() {
@@ -638,7 +394,6 @@
       renderer.setSize(w, h, false);
       camera.aspect = aspect;
       camera.updateProjectionMatrix();
-
       var a = (aspect < 1 ? 62 : 18) * Math.PI / 180;
       tilt.rotation.z = -(Math.PI / 2 - a);
       var halfW = (L / 2) * Math.cos(a) + R * Math.sin(a);
@@ -650,11 +405,10 @@
 
     var spin = 0, lastY = window.scrollY || 0;
     function frame() {
-      spin += 0.016;
+      spin += 0.02; // Smooth 5-second showcase spin
       var y = window.scrollY || 0;
       spin += (y - lastY) * 0.008;
       lastY = y;
-
       mesh.rotation.y = spin;
       renderer.render(scene, camera);
       requestAnimationFrame(frame);
