@@ -31,30 +31,34 @@
       overflow-x: hidden;
     }
 
-    /* 3D Cylinder Background Canvas */
+    /* 3D Cylinder Intro: Starts in front of everything, then moves behind */
     #cyl {
       position: fixed;
       inset: 0;
       width: 100%;
       height: 100%;
-      z-index: 0;
+      z-index: 101;
       pointer-events: none;
       display: block;
+      transition: z-index 0.1s ease;
+    }
+    #cyl.back {
+      z-index: 0;
     }
 
     /* "Tap to enjoy the Flavour !" Center Pop-up Overlay */
     #flavor-gate {
       position: fixed;
       inset: 0;
-      z-index: 999;
+      z-index: 200;
       display: none;
       flex-direction: column;
       align-items: center;
       justify-content: center;
-      background: rgba(7, 3, 4, 0.75);
+      background: rgba(7, 3, 4, 0.85);
       backdrop-filter: blur(8px);
       padding: 20px;
-      animation: fadeIn 0.4s ease forwards;
+      animation: popIn 0.35s ease forwards;
     }
     #flavor-gate.active {
       display: flex;
@@ -78,9 +82,9 @@
       0%, 100% { transform: scale(1); box-shadow: 0 0 30px rgba(255, 23, 68, 0.7); }
       50% { transform: scale(1.05); box-shadow: 0 0 45px rgba(255, 23, 68, 1); }
     }
-    @keyframes fadeIn {
-      from { opacity: 0; }
-      to { opacity: 1; }
+    @keyframes popIn {
+      from { opacity: 0; transform: scale(0.92); }
+      to { opacity: 1; transform: scale(1); }
     }
 
     /* Page Container */
@@ -383,6 +387,7 @@
     <button class="flavor-btn" onclick="startFlavorMusic()">Tap to enjoy the Flavour !</button>
   </div>
 
+  <!-- 3D Canvas starts in front (z-index: 101) for the intro animation -->
   <canvas id="cyl"></canvas>
 
   <div class="container">
@@ -421,7 +426,6 @@
     <div class="modal-box">
       <button class="close-btn" onclick="closeModal()">&times;</button>
       
-      <!-- Step 1: Customer Details Form -->
       <div id="step-details">
         <h3 id="formTitle" style="color:#fff; font-size:1.2rem; margin-bottom:4px;">Delivery Details</h3>
         <p style="color:var(--text-sub); font-size:0.8rem; margin-bottom:16px;">Enter details for 20-30 mins delivery</p>
@@ -443,7 +447,6 @@
         </form>
       </div>
 
-      <!-- Step 2: Pay Online OR Cash On Delivery -->
       <div id="step-pay" style="display:none;">
         <h3 id="payTitle" style="color:#fff; font-size:1.15rem; margin-bottom:4px;"></h3>
         <p style="color:var(--text-sub); font-size:0.82rem; margin-bottom:6px;">Option 1: Pay Online</p>
@@ -458,7 +461,6 @@
         </button>
       </div>
 
-      <!-- Step 3: COD Order Confirmed Message -->
       <div id="step-cod-success" style="display:none;">
         <h3 style="color:#4ade80; font-size:1.25rem; margin-bottom:8px;">✓ Order Placed!</h3>
         <p style="color:#fff; font-size:0.95rem; margin-bottom:4px;" id="codProductInfo"></p>
@@ -468,7 +470,6 @@
         </p>
         <button class="btn btn-upi" style="width:100%; margin-top:16px;" onclick="closeModal()">Done</button>
       </div>
-
     </div>
   </div>
 
@@ -476,13 +477,6 @@
   <script>
   var audio = document.getElementById('bgAudio');
   var gate = document.getElementById('flavor-gate');
-
-  // Show "Tap to enjoy the Flavour !" button at 3 seconds
-  setTimeout(function() {
-    if (gate) {
-      gate.classList.add('active');
-    }
-  }, 3000);
 
   function startFlavorMusic() {
     if (audio) {
@@ -563,7 +557,7 @@
     });
   }
 
-  // Instant Three.js Cylinder Scene
+  // 3D Cylinder with Front Entrance Animation (Matches original Three.js script)
   (function () {
     var canvas = document.getElementById('cyl');
     if (typeof THREE === 'undefined' || !canvas) return;
@@ -589,7 +583,7 @@
     fill.position.set(40, -30, -50);
     scene.add(fill);
 
-    // Dynamic gradient canvas texture so cylinder starts with vivid colors immediately
+    // Initial procedural red gradient texture for immediate render
     var c = document.createElement('canvas');
     c.width = 512;
     c.height = 512;
@@ -601,8 +595,8 @@
     ctx.fillRect(0, 0, 512, 512);
     var instantTexture = new THREE.CanvasTexture(c);
 
-    var side = new THREE.MeshStandardMaterial({ map: instantTexture, roughness: 0.35, metalness: 0.1, transparent: true, opacity: 0.5 });
-    var cap = new THREE.MeshStandardMaterial({ color: 0x140407, roughness: 0.6 });
+    var side = new THREE.MeshStandardMaterial({ map: instantTexture, roughness: 0.35, metalness: 0.1, transparent: true });
+    var cap = new THREE.MeshStandardMaterial({ color: 0x140407, roughness: 0.6, transparent: true });
     var mesh = new THREE.Mesh(new THREE.CylinderGeometry(R, R, L, 64, 1), [side, cap, cap]);
 
     var tilt = new THREE.Group();
@@ -627,29 +621,31 @@
       camera.position.set(0, 0, d);
     }
 
-    var spin = 0, lastY = window.scrollY || 0;
-    function frame() {
-      spin += 0.012;
-      var y = window.scrollY || 0;
-      spin += (y - lastY) * 0.008;
-      lastY = y;
+    function clamp01(x) { return Math.max(0, Math.min(1, x)); }
+    function ease(x) { return x < 0.5 ? 4 * x * x * x : 1 - Math.pow(-2 * x + 2, 3) / 2; }
 
-      mesh.rotation.y = spin;
-      renderer.render(scene, camera);
-      requestAnimationFrame(frame);
+    // Front-and-center timing sequence
+    var T_IN = 0.9, T_HOLD = 3.0, T_OUT = 3.9;
+    var BG_SCALE = 0.72, BG_OPACITY = 0.42;
+    var t0 = performance.now(), last = t0, lastDraw = 0, spin = 0, lastY = window.scrollY || 0;
+    var finished = false;
+
+    function setLook(scale, opacity) {
+      pose.scale.set(scale, scale, scale);
+      side.opacity = opacity;
+      cap.opacity = opacity;
     }
 
-    layout();
-    window.addEventListener('resize', layout);
-    requestAnimationFrame(frame);
+    function frame(now) {
+      var t = (now - t0) / 1000;
+      var dt = Math.min(0.05, (now - last) / 1000);
+      last = now;
 
-    // Load custom artwork texture asynchronously
-    new THREE.TextureLoader().load('/static/panel_artwork.jpg', function(tex) {
-      tex.encoding = THREE.sRGBEncoding;
-      side.map = tex;
-      side.needsUpdate = true;
-    });
-  })();
-  </script>
-</body>
-</html>
+      if (!finished) {
+        var p = ease(clamp01(t / T_IN));
+        var q = ease(clamp01((t - T_HOLD) / (T_OUT - T_HOLD)));
+        setLook((0.6 + 0.4 * p) * (1 - (1 - BG_SCALE) * q), p * (1 - (1 - BG_OPACITY) * q));
+        spin += (0.9 + 3.5 * (1 - p)) * dt;
+
+        // When the front spin finishes at 3 seconds:
+        if (t >= T_HOLD 
