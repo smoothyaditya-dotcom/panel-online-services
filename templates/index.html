@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
   <title>PANEL OFFICIAL</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -31,22 +31,35 @@
       overflow-x: hidden;
     }
 
-    /* 3D Cylinder Intro: Starts in front of everything, then moves behind */
+    /* 3D Canvas Layer */
     #cyl {
       position: fixed;
       inset: 0;
-      width: 100%;
-      height: 100%;
-      z-index: 101;
+      width: 100vw;
+      height: 100vh;
+      z-index: 100;
       pointer-events: none;
       display: block;
-      transition: z-index 0.1s ease;
+      transition: z-index 0.3s ease;
     }
     #cyl.back {
       z-index: 0;
     }
 
-    /* "Tap to enjoy the Flavour !" Center Pop-up Overlay */
+    /* Intro Overlay Veil */
+    #intro-veil {
+      position: fixed;
+      inset: 0;
+      background: #090305;
+      z-index: 90;
+      transition: opacity 0.8s ease;
+      pointer-events: none;
+    }
+    #intro-veil.fade-out {
+      opacity: 0;
+    }
+
+    /* Pop-up Button: "Tap to enjoy the Flavour !" */
     #flavor-gate {
       position: fixed;
       inset: 0;
@@ -55,13 +68,13 @@
       flex-direction: column;
       align-items: center;
       justify-content: center;
-      background: rgba(7, 3, 4, 0.85);
+      background: rgba(7, 3, 4, 0.82);
       backdrop-filter: blur(8px);
       padding: 20px;
-      animation: popIn 0.35s ease forwards;
     }
     #flavor-gate.active {
       display: flex;
+      animation: popIn 0.35s ease forwards;
     }
     .flavor-btn {
       background: var(--accent-gradient);
@@ -70,24 +83,24 @@
       font-weight: 800;
       font-size: 1.15rem;
       letter-spacing: 1px;
-      padding: 16px 36px;
+      padding: 18px 36px;
       border-radius: 999px;
       border: 2px solid rgba(255, 255, 255, 0.35);
-      box-shadow: 0 0 35px rgba(255, 23, 68, 0.8);
+      box-shadow: 0 0 35px rgba(255, 23, 68, 0.85);
       cursor: pointer;
       animation: pulseBtn 1.8s infinite;
       text-align: center;
     }
     @keyframes pulseBtn {
       0%, 100% { transform: scale(1); box-shadow: 0 0 30px rgba(255, 23, 68, 0.7); }
-      50% { transform: scale(1.05); box-shadow: 0 0 45px rgba(255, 23, 68, 1); }
+      50% { transform: scale(1.05); box-shadow: 0 0 50px rgba(255, 23, 68, 1); }
     }
     @keyframes popIn {
-      from { opacity: 0; transform: scale(0.92); }
+      from { opacity: 0; transform: scale(0.9); }
       to { opacity: 1; transform: scale(1); }
     }
 
-    /* Page Container */
+    /* Main Store Container */
     .container {
       position: relative;
       z-index: 10;
@@ -377,18 +390,21 @@
 </head>
 <body>
 
-  <!-- Audio Element (Loop enabled) -->
+  <!-- Background Music Audio Element -->
   <audio id="bgAudio" loop playsinline preload="auto">
     <source src="/static/intro_sound.mp3" type="audio/mpeg">
   </audio>
 
-  <!-- Button that appears at exactly 3 seconds -->
+  <!-- 3D Canvas (Starts in front at z-index: 100) -->
+  <canvas id="cyl"></canvas>
+
+  <!-- Intro Background Veil -->
+  <div id="intro-veil"></div>
+
+  <!-- Pop-Up Button Gate -->
   <div id="flavor-gate">
     <button class="flavor-btn" onclick="startFlavorMusic()">Tap to enjoy the Flavour !</button>
   </div>
-
-  <!-- 3D Canvas starts in front (z-index: 101) for the intro animation -->
-  <canvas id="cyl"></canvas>
 
   <div class="container">
     <header class="brand-header">
@@ -421,11 +437,12 @@
     </footer>
   </div>
 
-  <!-- Order Modal -->
+  <!-- Order Details & Payment Modal -->
   <div id="orderModal" class="modal-backdrop" onclick="closeModalOnBackdrop(event)">
     <div class="modal-box">
       <button class="close-btn" onclick="closeModal()">&times;</button>
       
+      <!-- Step 1: Customer Details -->
       <div id="step-details">
         <h3 id="formTitle" style="color:#fff; font-size:1.2rem; margin-bottom:4px;">Delivery Details</h3>
         <p style="color:var(--text-sub); font-size:0.8rem; margin-bottom:16px;">Enter details for 20-30 mins delivery</p>
@@ -447,6 +464,7 @@
         </form>
       </div>
 
+      <!-- Step 2: Pay Online OR COD -->
       <div id="step-pay" style="display:none;">
         <h3 id="payTitle" style="color:#fff; font-size:1.15rem; margin-bottom:4px;"></h3>
         <p style="color:var(--text-sub); font-size:0.82rem; margin-bottom:6px;">Option 1: Pay Online</p>
@@ -461,6 +479,7 @@
         </button>
       </div>
 
+      <!-- Step 3: COD Order Confirmed Screen -->
       <div id="step-cod-success" style="display:none;">
         <h3 style="color:#4ade80; font-size:1.25rem; margin-bottom:8px;">✓ Order Placed!</h3>
         <p style="color:#fff; font-size:0.95rem; margin-bottom:4px;" id="codProductInfo"></p>
@@ -557,9 +576,10 @@
     });
   }
 
-  // 3D Cylinder with Front Entrance Animation (Matches original Three.js script)
+  // 3D Cylinder Intro Sequence
   (function () {
     var canvas = document.getElementById('cyl');
+    var veil = document.getElementById('intro-veil');
     if (typeof THREE === 'undefined' || !canvas) return;
 
     var renderer;
@@ -573,17 +593,17 @@
 
     var scene = new THREE.Scene();
     var camera = new THREE.PerspectiveCamera(30, 1, 1, 1000);
-    scene.add(new THREE.AmbientLight(0xffffff, 1.25));
+    scene.add(new THREE.AmbientLight(0xffffff, 1.3));
     
-    var key = new THREE.DirectionalLight(0xff3355, 1.4);
+    var key = new THREE.DirectionalLight(0xff3355, 1.5);
     key.position.set(-40, 60, 80);
     scene.add(key);
 
-    var fill = new THREE.DirectionalLight(0xffffff, 0.6);
+    var fill = new THREE.DirectionalLight(0xffffff, 0.7);
     fill.position.set(40, -30, -50);
     scene.add(fill);
 
-    // Initial procedural red gradient texture for immediate render
+    // Initial procedural texture
     var c = document.createElement('canvas');
     c.width = 512;
     c.height = 512;
@@ -596,7 +616,7 @@
     var instantTexture = new THREE.CanvasTexture(c);
 
     var side = new THREE.MeshStandardMaterial({ map: instantTexture, roughness: 0.35, metalness: 0.1, transparent: true });
-    var cap = new THREE.MeshStandardMaterial({ color: 0x140407, roughness: 0.6, transparent: true });
+    var cap = new THREE.MeshStandardMaterial({ color: 0x140407, roughness: 0.6 });
     var mesh = new THREE.Mesh(new THREE.CylinderGeometry(R, R, L, 64, 1), [side, cap, cap]);
 
     var tilt = new THREE.Group();
@@ -624,10 +644,9 @@
     function clamp01(x) { return Math.max(0, Math.min(1, x)); }
     function ease(x) { return x < 0.5 ? 4 * x * x * x : 1 - Math.pow(-2 * x + 2, 3) / 2; }
 
-    // Front-and-center timing sequence
-    var T_IN = 0.9, T_HOLD = 3.0, T_OUT = 3.9;
+    var T_IN = 0.9, T_HOLD = 3.0, T_OUT = 3.8;
     var BG_SCALE = 0.72, BG_OPACITY = 0.42;
-    var t0 = performance.now(), last = t0, lastDraw = 0, spin = 0, lastY = window.scrollY || 0;
+    var t0 = performance.now(), last = t0, spin = 0, lastY = window.scrollY || 0;
     var finished = false;
 
     function setLook(scale, opacity) {
@@ -642,10 +661,46 @@
       last = now;
 
       if (!finished) {
-        var p = ease(clamp01(t / T_IN));
+                var p = ease(clamp01(t / T_IN));
         var q = ease(clamp01((t - T_HOLD) / (T_OUT - T_HOLD)));
-        setLook((0.6 + 0.4 * p) * (1 - (1 - BG_SCALE) * q), p * (1 - (1 - BG_OPACITY) * q));
-        spin += (0.9 + 3.5 * (1 - p)) * dt;
+        setLook((0.65 + 0.35 * p) * (1 - (1 - BG_SCALE) * q), (1 - (1 - BG_OPACITY) * q));
+        spin += (1.2 + 3.8 * (1 - p)) * dt;
 
-        // When the front spin finishes at 3 seconds:
-        if (t >= T_HOLD 
+        if (t >= T_HOLD) {
+          if (veil) veil.classList.add('fade-out');
+          if (gate && !gate.classList.contains('active')) {
+            gate.classList.add('active');
+          }
+        }
+
+        if (t >= T_OUT) {
+          finished = true;
+          canvas.className = 'back';
+          if (veil) veil.style.display = 'none';
+          setLook(BG_SCALE, BG_OPACITY);
+        }
+      } else {
+        spin += 0.55 * dt;
+        var y = window.scrollY || 0;
+        spin += (y - lastY) * 0.008;
+        lastY = y;
+      }
+
+      mesh.rotation.y = spin;
+      renderer.render(scene, camera);
+      requestAnimationFrame(frame);
+    }
+
+    layout();
+    window.addEventListener('resize', layout);
+    requestAnimationFrame(frame);
+
+    new THREE.TextureLoader().load('/static/panel_artwork.jpg', function(tex) {
+      tex.encoding = THREE.sRGBEncoding;
+      side.map = tex;
+      side.needsUpdate = true;
+    });
+  })();
+  </script>
+</body>
+</html>
