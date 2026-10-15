@@ -29,7 +29,21 @@
       overflow-x: hidden;
     }
 
-    /* 3D Cylinder Canvas starts at the front for the 5-second intro */
+    /* Black Intro Backdrop: sits behind cylinder (z-index 90) but over the shop (z-index 10) */
+    #intro-bg {
+      position: fixed;
+      inset: 0;
+      background: #000000;
+      z-index: 90;
+      transition: opacity 0.6s ease;
+      pointer-events: none;
+    }
+    #intro-bg.fade-out {
+      opacity: 0;
+      display: none;
+    }
+
+    /* 3D Cylinder Canvas: in front of the black screen (z-index 100) */
     #cyl {
       position: fixed;
       inset: 0;
@@ -187,7 +201,10 @@
     <source src="/static/intro_sound.mp3" type="audio/mpeg">
   </audio>
 
-  <!-- 3D Cylinder Canvas -->
+  <!-- Pure Black Background Screen during the 5s intro -->
+  <div id="intro-bg"></div>
+
+  <!-- 3D Cylinder Canvas (in front of intro-bg) -->
   <canvas id="cyl"></canvas>
 
   <!-- Button Overlay Pop-up -->
@@ -273,10 +290,12 @@
   <script>
   var audio = document.getElementById('bgAudio');
   var gate = document.getElementById('flavor-gate');
+  var introBg = document.getElementById('intro-bg');
   var canvas = document.getElementById('cyl');
 
-  // Trigger button popup and send cylinder to background at exactly 5 seconds
+  // At precisely 5 seconds: hide black intro screen, move cylinder to background, show pop-up button
   setTimeout(function() {
+    if (introBg) introBg.classList.add('fade-out');
     if (canvas) canvas.className = 'back';
     if (gate) gate.classList.add('active');
   }, 5000);
