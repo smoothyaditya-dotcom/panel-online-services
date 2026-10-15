@@ -1,8 +1,10 @@
-from flask import Flask, render_template_string
+import os
+from datetime import datetime
+from flask import Flask, render_template_string, request, jsonify
 
 app = Flask(__name__)
 
-# Products catalog with fixed amounts and live UPI payment links & dynamic QR codes
+# Product catalog with fixed prices and UPI links
 PRODUCTS = [
     {
         "id": 1,
@@ -67,7 +69,6 @@ PAGE = """
       overflow-x: hidden;
     }
 
-    /* 3D Intro Background Overlay */
     #intro-bg {
       position: fixed;
       inset: 0;
@@ -81,7 +82,6 @@ PAGE = """
       pointer-events: none;
     }
 
-    /* 3D Cylinder Canvas Layer */
     #cyl {
       position: fixed;
       inset: 0;
@@ -100,7 +100,6 @@ PAGE = """
       to { opacity: 0; visibility: hidden; }
     }
 
-    /* Page Layout */
     .container {
       position: relative;
       z-index: 10;
@@ -109,7 +108,6 @@ PAGE = """
       padding: 40px 16px 40px;
     }
 
-    /* Animated Brand Title */
     .brand-header {
       text-align: center;
       margin-bottom: 36px;
@@ -146,7 +144,6 @@ PAGE = """
       letter-spacing: 0.5px;
     }
 
-    /* Catalog & Cards */
     .catalog {
       display: flex;
       flex-direction: column;
@@ -215,7 +212,6 @@ PAGE = """
       flex-wrap: wrap;
     }
 
-    /* Buttons */
     .btn {
       font-family: inherit;
       font-size: 0.85rem;
@@ -254,7 +250,6 @@ PAGE = """
       border-color: rgba(255, 255, 255, 0.3);
     }
 
-    /* Footer Credits */
     .footer {
       text-align: center;
       margin-top: 48px;
@@ -274,7 +269,6 @@ PAGE = """
       font-weight: 700;
     }
 
-    /* Pop-up Modal */
     .modal-backdrop {
       display: none;
       position: fixed;
@@ -294,34 +288,13 @@ PAGE = """
     .modal-box {
       background: #140609;
       border: 1px solid rgba(255, 23, 68, 0.35);
-      padding: 28px 24px;
+      padding: 28px 22px;
       border-radius: 20px;
       text-align: center;
-      max-width: 320px;
+      max-width: 360px;
       width: 100%;
       box-shadow: 0 20px 40px rgba(0, 0, 0, 0.85);
       position: relative;
-    }
-
-    .modal-box h3 {
-      font-size: 1.15rem;
-      margin-bottom: 4px;
-      color: #ffffff;
-    }
-
-    .modal-box p {
-      font-size: 0.82rem;
-      color: var(--text-sub);
-      margin-bottom: 16px;
-    }
-
-    .modal-box img {
-      width: 210px;
-      height: 210px;
-      border-radius: 12px;
-      background: #ffffff;
-      padding: 8px;
-      box-shadow: 0 4px 14px rgba(0, 0, 0, 0.3);
     }
 
     .close-btn {
@@ -334,13 +307,53 @@ PAGE = """
       font-size: 1.4rem;
       cursor: pointer;
     }
-
     .close-btn:hover { color: #fff; }
+
+    .input-group {
+      text-align: left;
+      margin-bottom: 14px;
+    }
+    .input-group label {
+      display: block;
+      font-size: 0.78rem;
+      font-weight: 600;
+      color: var(--text-sub);
+      margin-bottom: 5px;
+    }
+    .input-group input, .input-group textarea {
+      width: 100%;
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid rgba(255, 255, 255, 0.15);
+      border-radius: 8px;
+      padding: 10px 12px;
+      color: #ffffff;
+      font-family: inherit;
+      font-size: 0.88rem;
+      outline: none;
+    }
+    .input-group input:focus, .input-group textarea:focus {
+      border-color: #ff1e3c;
+      box-shadow: 0 0 10px rgba(255, 30, 60, 0.3);
+    }
+    .input-group textarea {
+      resize: vertical;
+      min-height: 65px;
+    }
+
+    .modal-box img {
+      width: 210px;
+      height: 210px;
+      border-radius: 12px;
+      background: #ffffff;
+      padding: 8px;
+      box-shadow: 0 4px 14px rgba(0, 0, 0, 0.3);
+      margin: 12px auto;
+      display: block;
+    }
   </style>
 </head>
 <body>
 
-  <!-- Fullscreen 3D Intro & Animated Background -->
   <div id="intro-bg" aria-hidden="true"></div>
   <canvas id="cyl" aria-hidden="true"></canvas>
 
@@ -362,33 +375,110 @@ PAGE = """
             <div class="price-tag">{{ p.price }}</div>
           </div>
           <div class="action-group">
-            <a href="{{ p.upi_link }}" class="btn btn-upi">Pay via UPI</a>
-            <button class="btn btn-qr" onclick="openQr('{{ p.qr }}', '{{ p.name }}', '{{ p.price }}')">Scan QR</button>
+            <button class="btn btn-upi" onclick="openOrder('{{ p.name }}', '{{ p.price }}', '{{ p.upi_link }}', '{{ p.qr }}')">Pay via UPI</button>
+            <button class="btn btn-qr" onclick="openOrder('{{ p.name }}', '{{ p.price }}', '{{ p.upi_link }}', '{{ p.qr }}')">Scan QR</button>
           </div>
         </div>
       </div>
       {% endfor %}
     </div>
 
-    <!-- Footer Credits -->
     <footer class="footer">
       <p class="footer-text">A Brand By - <span>Vijay , Sachin and Shekhar</span></p>
     </footer>
   </div>
 
-  <!-- QR Modal Pop-up -->
-  <div id="qrModal" class="modal-backdrop" onclick="closeModalOnBackdrop(event)">
+  <!-- Order & Payment Modal -->
+  <div id="orderModal" class="modal-backdrop" onclick="closeModalOnBackdrop(event)">
     <div class="modal-box">
-      <button class="close-btn" onclick="closeQr()">&times;</button>
-      <h3 id="modalProductName">Payment</h3>
-      <p id="modalProductPrice">Scan to pay with any UPI app</p>
-      <img id="modalQrImg" src="" alt="Payment QR Code">
+      <button class="close-btn" onclick="closeModal()">&times;</button>
+      
+      <!-- Step 1: Customer Details Form -->
+      <div id="step-details">
+        <h3 id="formTitle" style="color:#fff; font-size:1.2rem; margin-bottom:4px;">Delivery Details</h3>
+        <p style="color:var(--text-sub); font-size:0.8rem; margin-bottom:16px;">Enter details for 20-30 mins delivery</p>
+        
+        <form id="orderForm" onsubmit="submitDetails(event)">
+          <div class="input-group">
+            <label>Full Name</label>
+            <input type="text" id="custName" required placeholder="Your name">
+          </div>
+          <div class="input-group">
+            <label>Phone Number (for delivery)</label>
+            <input type="tel" id="custPhone" required placeholder="e.g. 9876543210">
+          </div>
+          <div class="input-group">
+            <label>Delivery Address / Location</label>
+            <textarea id="custAddress" required placeholder="House / Flat / Area / Landmark"></textarea>
+          </div>
+          <button type="submit" class="btn btn-upi" style="width:100%; margin-top:8px;">Proceed to Pay</button>
+        </form>
+      </div>
+
+      <!-- Step 2: Payment Options -->
+      <div id="step-pay" style="display:none;">
+        <h3 id="payTitle" style="color:#fff; font-size:1.15rem; margin-bottom:4px;"></h3>
+        <p style="color:var(--text-sub); font-size:0.82rem; margin-bottom:10px;">Scan QR or click below to complete payment</p>
+        <img id="payQrImg" src="" alt="Payment QR Code">
+        <a id="payUpiBtn" href="" class="btn btn-upi" style="width:100%; margin-top:8px;">Open UPI App to Pay</a>
+      </div>
     </div>
   </div>
 
   <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
   {% raw %}
   <script>
+  var currentOrder = { name: '', price: '', upi: '', qr: '' };
+
+  function openOrder(prodName, prodPrice, upiLink, qrLink) {
+    currentOrder = { name: prodName, price: prodPrice, upi: upiLink, qr: qrLink };
+    document.getElementById('formTitle').innerText = prodName + ' (' + prodPrice + ')';
+    document.getElementById('step-details').style.display = 'block';
+    document.getElementById('step-pay').style.display = 'none';
+    document.getElementById('orderModal').classList.add('active');
+  }
+
+  function closeModal() {
+    document.getElementById('orderModal').classList.remove('active');
+  }
+
+  function closeModalOnBackdrop(e) {
+    if (e.target.id === 'orderModal') closeModal();
+  }
+
+  function submitDetails(e) {
+    e.preventDefault();
+    var name = document.getElementById('custName').value.trim();
+    var phone = document.getElementById('custPhone').value.trim();
+    var address = document.getElementById('custAddress').value.trim();
+
+    fetch('/save_order', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        product: currentOrder.name,
+        price: currentOrder.price,
+        customer_name: name,
+        phone: phone,
+        address: address
+      })
+    })
+    .then(function(res) { return res.json(); })
+    .then(function(data) {
+      if (data.status === 'ok') {
+        document.getElementById('step-details').style.display = 'none';
+        document.getElementById('step-pay').style.display = 'block';
+        document.getElementById('payTitle').innerText = currentOrder.name + ' - ' + currentOrder.price;
+        document.getElementById('payQrImg').src = currentOrder.qr;
+        document.getElementById('payUpiBtn').href = currentOrder.upi;
+      }
+    })
+    .catch(function(err) {
+      alert('Unable to process order. Please try again.');
+    });
+  }
+
+  // 3D Cylinder Background Simulation
   (function () {
     var bg = document.getElementById('intro-bg');
     var canvas = document.getElementById('cyl');
@@ -405,8 +495,6 @@ PAGE = """
     } catch (e) { abandon(); return; }
 
     var reduce = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-    
-    // Exact Dimensions: Diameter 6.0mm (Radius = 3mm), Length = 84mm
     var R = 3, L = 84;
 
     renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
@@ -414,7 +502,6 @@ PAGE = """
 
     var scene = new THREE.Scene();
     var camera = new THREE.PerspectiveCamera(30, 1, 1, 1000);
-    
     scene.add(new THREE.AmbientLight(0xffffff, 1.15));
     var key = new THREE.DirectionalLight(0xff3355, 1.2);
     key.position.set(-40, 60, 80);
@@ -525,51 +612,57 @@ PAGE = """
       begin();
     }
 
-    function fallbackTexture() {
-      var c = document.createElement('canvas');
-      c.width = 512;
-      c.height = 512;
-      var g = c.getContext('2d');
-      var grad = g.createLinearGradient(0, 0, 512, 512);
-      grad.addColorStop(0, '#8a0a14');
-      grad.addColorStop(1, '#1a0507');
-      g.fillStyle = grad;
-      g.fillRect(0, 0, 512, 512);
-      useTexture(new THREE.CanvasTexture(c));
-    }
-
-    // Loads static/panel_artwork.jpg directly onto the cylinder
-    new THREE.TextureLoader().load('/static/panel_artwork.jpg', useTexture, undefined, fallbackTexture);
+    new THREE.TextureLoader().load('/static/panel_artwork.jpg', useTexture);
   })();
-
-  function openQr(qrUrl, name, price) {
-    document.getElementById('modalQrImg').src = qrUrl;
-    document.getElementById('modalProductName').innerText = name;
-    document.getElementById('modalProductPrice').innerText = 'Pay ' + price + ' with any UPI app';
-    document.getElementById('qrModal').classList.add('active');
-  }
-
-  function closeQr() {
-    document.getElementById('qrModal').classList.remove('active');
-  }
-
-  function closeModalOnBackdrop(e) {
-    if (e.target.id === 'qrModal') closeQr();
-  }
   </script>
   {% endraw %}
 </body>
 </html>
 """
 
+ORDERS_FILE = "orders.txt"
+
 @app.route("/")
 def home():
     return render_template_string(PAGE, products=PRODUCTS)
+
+@app.route("/save_order", methods=["POST"])
+def save_order():
+    data = request.get_json() or {}
+    cust_name = data.get("customer_name", "").strip()
+    phone = data.get("phone", "").strip()
+    address = data.get("address", "").strip()
+    product = data.get("product", "").strip()
+    price = data.get("price", "").strip()
+    timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+
+    order_entry = (
+        f"----------------------------------------\n"
+        f"Time: {timestamp}\n"
+        f"Product: {product} ({price})\n"
+        f"Name: {cust_name}\n"
+        f"Phone: {phone}\n"
+        f"Address / Location: {address}\n"
+        f"----------------------------------------\n\n"
+    )
+
+    # Automatically creates orders.txt if it doesn't exist
+    with open(ORDERS_FILE, "a", encoding="utf-8") as f:
+        f.write(order_entry)
+
+    return jsonify({"status": "ok"})
+
+@app.route("/orders")
+def view_orders():
+    """Browser viewer to check your saved orders."""
+    if not os.path.exists(ORDERS_FILE):
+        return "<pre style='background:#111;color:#eee;padding:20px;'>No orders received yet.</pre>"
+    with open(ORDERS_FILE, "r", encoding="utf-8") as f:
+        content = f.read()
+    return f"<pre style='background:#111;color:#76ff03;padding:20px;font-family:monospace;white-space:pre-wrap;'>{content}</pre>"
 
 @app.route("/health")
 def health():
     return "ok"
 
-if __name__ == "__main__":
-    app.run(debug=True)
-    
+if __name__ == "__ma
