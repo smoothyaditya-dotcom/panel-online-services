@@ -31,26 +31,54 @@
       overflow-x: hidden;
     }
 
+    /* 3D Intro Elements */
+    #intro-bg {
+      position: fixed;
+      inset: 0;
+      z-index: 50;
+      background: #090305;
+      transition: opacity 0.8s ease;
+      pointer-events: none;
+    }
+    #intro-bg.gone {
+      opacity: 0;
+    }
+
+    #cyl {
+      position: fixed;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      z-index: 51;
+      pointer-events: none;
+      display: block;
+      transition: z-index 0.2s ease;
+    }
+    #cyl.back {
+      z-index: 0;
+    }
+
+    /* "Tap to enjoy the Flavour !" Center Button Overlay */
     #flavor-gate {
       position: fixed;
       inset: 0;
-      z-index: 1000;
-      background: rgba(7, 3, 4, 0.85);
+      z-index: 200;
       display: flex;
       flex-direction: column;
       align-items: center;
       justify-content: center;
+      background: rgba(7, 3, 4, 0.82);
+      backdrop-filter: blur(8px);
       opacity: 0;
       visibility: hidden;
-      transition: opacity 0.6s ease, visibility 0.6s ease;
-      backdrop-filter: blur(6px);
+      transition: opacity 0.5s ease, visibility 0.5s ease;
       padding: 20px;
     }
-    #flavor-gate.show {
+    #flavor-gate.active {
       opacity: 1;
       visibility: visible;
     }
-    #flavor-gate.hide {
+    #flavor-gate.dismissed {
       opacity: 0;
       visibility: hidden;
       pointer-events: none;
@@ -62,45 +90,20 @@
       font-weight: 800;
       font-size: 1.15rem;
       letter-spacing: 1px;
-      padding: 16px 36px;
+      padding: 16px 34px;
       border-radius: 999px;
-      border: 2px solid rgba(255, 255, 255, 0.25);
-      box-shadow: 0 0 35px rgba(255, 23, 68, 0.65);
+      border: 2px solid rgba(255, 255, 255, 0.35);
+      box-shadow: 0 0 35px rgba(255, 23, 68, 0.7);
       cursor: pointer;
       animation: pulseBtn 1.8s infinite;
       text-align: center;
     }
     @keyframes pulseBtn {
-      0%, 100% { transform: scale(1); box-shadow: 0 0 30px rgba(255, 23, 68, 0.6); }
-      50% { transform: scale(1.05); box-shadow: 0 0 45px rgba(255, 23, 68, 0.95); }
+      0%, 100% { transform: scale(1); box-shadow: 0 0 30px rgba(255, 23, 68, 0.7); }
+      50% { transform: scale(1.05); box-shadow: 0 0 45px rgba(255, 23, 68, 1); }
     }
 
-    #intro-bg {
-      position: fixed;
-      inset: 0;
-      z-index: 100;
-      background: #090305;
-      transition: opacity 0.9s cubic-bezier(0.4, 0, 0.2, 1);
-      animation: failsafe 0.5s 9s forwards;
-    }
-    #intro-bg.gone { opacity: 0; pointer-events: none; }
-
-    #cyl {
-      position: fixed;
-      inset: 0;
-      width: 100%;
-      height: 100%;
-      z-index: 101;
-      pointer-events: none;
-      display: block;
-      transition: z-index 0.1s ease;
-    }
-    #cyl.back { z-index: 0; }
-
-    @keyframes failsafe {
-      to { opacity: 0; visibility: hidden; }
-    }
-
+    /* Page Container */
     .container {
       position: relative;
       z-index: 10;
@@ -270,6 +273,7 @@
       font-weight: 700;
     }
 
+    /* Modal Styling */
     .modal-backdrop {
       display: none;
       position: fixed;
@@ -389,16 +393,18 @@
 </head>
 <body>
 
+  <!-- Background Looping Audio -->
   <audio id="bgAudio" loop playsinline preload="auto">
     <source src="/static/intro_sound.mp3" type="audio/mpeg">
   </audio>
 
+  <!-- Tap to enjoy the Flavour Button -->
   <div id="flavor-gate">
     <button class="flavor-btn" onclick="startFlavorMusic()">Tap to enjoy the Flavour !</button>
   </div>
 
-  <div id="intro-bg" aria-hidden="true"></div>
-  <canvas id="cyl" aria-hidden="true"></canvas>
+  <div id="intro-bg"></div>
+  <canvas id="cyl"></canvas>
 
   <div class="container">
     <header class="brand-header">
@@ -435,7 +441,6 @@
     <div class="modal-box">
       <button class="close-btn" onclick="closeModal()">&times;</button>
       
-      <!-- Step 1: Customer Details Form -->
       <div id="step-details">
         <h3 id="formTitle" style="color:#fff; font-size:1.2rem; margin-bottom:4px;">Delivery Details</h3>
         <p style="color:var(--text-sub); font-size:0.8rem; margin-bottom:16px;">Enter details for 20-30 mins delivery</p>
@@ -457,7 +462,6 @@
         </form>
       </div>
 
-      <!-- Step 2: Pay Online OR Cash On Delivery -->
       <div id="step-pay" style="display:none;">
         <h3 id="payTitle" style="color:#fff; font-size:1.15rem; margin-bottom:4px;"></h3>
         <p style="color:var(--text-sub); font-size:0.82rem; margin-bottom:6px;">Option 1: Pay Online</p>
@@ -467,13 +471,11 @@
 
         <div class="or-divider">OR</div>
 
-        <!-- Cash On Delivery Button -->
         <button type="button" class="btn-cod" onclick="confirmCodOrder()">
           💵 Cash On Delivery (+₹10 Extra)
         </button>
       </div>
 
-      <!-- Step 3: COD Order Confirmed Message -->
       <div id="step-cod-success" style="display:none;">
         <h3 style="color:#4ade80; font-size:1.25rem; margin-bottom:8px;">✓ Order Placed!</h3>
         <p style="color:#fff; font-size:0.95rem; margin-bottom:4px;" id="codProductInfo"></p>
@@ -483,7 +485,6 @@
         </p>
         <button class="btn btn-upi" style="width:100%; margin-top:16px;" onclick="closeModal()">Done</button>
       </div>
-
     </div>
   </div>
 
@@ -492,8 +493,11 @@
   var audio = document.getElementById('bgAudio');
   var gate = document.getElementById('flavor-gate');
 
+  // Show "Tap to enjoy the Flavour !" button at 3 seconds
   setTimeout(function() {
-    if (gate) gate.classList.add('show');
+    if (gate) {
+      gate.classList.add('active');
+    }
   }, 3000);
 
   function startFlavorMusic() {
@@ -502,8 +506,8 @@
       audio.play().catch(function(e) { console.log(e); });
     }
     if (gate) {
-      gate.classList.remove('show');
-      gate.classList.add('hide');
+      gate.classList.remove('active');
+      gate.classList.add('dismissed');
     }
   }
 
@@ -576,42 +580,56 @@
     });
   }
 
+  // Three.js Cylinder Scene
   (function () {
     var bg = document.getElementById('intro-bg');
     var canvas = document.getElementById('cyl');
 
-    function abandon() {
+    if (typeof THREE === 'undefined' || !canvas) {
       if (bg) bg.style.display = 'none';
-      if (canvas) canvas.style.display = 'none';
+      return;
     }
-    if (typeof THREE === 'undefined') { abandon(); return; }
 
     var renderer;
     try {
       renderer = new THREE.WebGLRenderer({ canvas: canvas, alpha: true, antialias: true });
-    } catch (e) { abandon(); return; }
+    } catch (e) {
+      if (bg) bg.style.display = 'none';
+      return;
+    }
 
-    var reduce = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
     var R = 3, L = 84;
-
     renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
     renderer.outputEncoding = THREE.sRGBEncoding;
 
     var scene = new THREE.Scene();
     var camera = new THREE.PerspectiveCamera(30, 1, 1, 1000);
-    scene.add(new THREE.AmbientLight(0xffffff, 1.15));
-    var key = new THREE.DirectionalLight(0xff3355, 1.2);
+    scene.add(new THREE.AmbientLight(0xffffff, 1.2));
+    
+    var key = new THREE.DirectionalLight(0xff3355, 1.4);
     key.position.set(-40, 60, 80);
     scene.add(key);
 
-    var fill = new THREE.DirectionalLight(0xffffff, 0.5);
+    var fill = new THREE.DirectionalLight(0xffffff, 0.6);
     fill.position.set(40, -30, -50);
     scene.add(fill);
 
-    var side = new THREE.MeshStandardMaterial({ roughness: 0.35, metalness: 0.1, transparent: true });
+    // Instant fallback gradient texture so cylinder renders immediately
+    var c = document.createElement('canvas');
+    c.width = 512;
+    c.height = 512;
+    var ctx = c.getContext('2d');
+    var grad = ctx.createLinearGradient(0, 0, 512, 512);
+    grad.addColorStop(0, '#990c1e');
+    grad.addColorStop(1, '#1a0507');
+    ctx.fillStyle = grad;
+    ctx.fillRect(0, 0, 512, 512);
+    var instantTexture = new THREE.CanvasTexture(c);
+
+    var side = new THREE.MeshStandardMaterial({ map: instantTexture, roughness: 0.35, metalness: 0.1, transparent: true });
     var cap = new THREE.MeshStandardMaterial({ color: 0x140407, roughness: 0.6, transparent: true });
     var mesh = new THREE.Mesh(new THREE.CylinderGeometry(R, R, L, 64, 1), [side, cap, cap]);
-    
+
     var tilt = new THREE.Group();
     tilt.add(mesh);
     var pose = new THREE.Group();
@@ -639,8 +657,8 @@
 
     var T_IN = 0.9, T_HOLD = 3.0, T_OUT = 3.9;
     var BG_SCALE = 0.72, BG_OPACITY = 0.42;
-    var started = false, faded = false, finished = false;
-    var t0 = 0, last = 0, lastDraw = 0, spin = 0, lastY = window.scrollY || 0;
+    var t0 = performance.now(), last = t0, lastDraw = 0, spin = 0, lastY = window.scrollY || 0;
+    var faded = false, finished = false;
 
     function setLook(scale, opacity) {
       pose.scale.set(scale, scale, scale);
@@ -648,17 +666,5 @@
       cap.opacity = opacity;
     }
 
-    function finish() {
-      finished = true;
-      if (bg) bg.style.display = 'none';
-      canvas.className = 'back';
-      setLook(BG_SCALE, BG_OPACITY);
-    }
-
     function frame(now) {
-      var t = (now - t0) / 1000;
-      var dt = Math.min(0.05, (now - last) / 1000);
-      last = now;
-
-      if (!finished) {
-        var p = ease(clamp01(t / T_
+      var t = (now - t0
