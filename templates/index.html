@@ -309,8 +309,10 @@
 </head>
 <body>
 
-  <!-- Background Music Loop Audio Element -->
-  <audio id="bgAudio" src="/static/intro_sound.mp3" preload="auto" loop playsinline></audio>
+  <!-- Background Music Audio Element -->
+  <audio id="bgAudio" loop playsinline preload="auto">
+    <source src="/static/intro_sound.mp3" type="audio/mpeg">
+  </audio>
 
   <div id="intro-bg" aria-hidden="true"></div>
   <canvas id="cyl" aria-hidden="true"></canvas>
@@ -382,38 +384,41 @@
 
   <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
   <script>
+  // High-reliability audio loop with Web Audio API unlock
   var audio = document.getElementById('bgAudio');
-  var isPlaying = false;
+  var isAudioStarted = false;
 
-  function startAudioLoop() {
-    if (!audio || isPlaying) return;
+  function playLoop() {
+    if (isAudioStarted || !audio) return;
     audio.play().then(function() {
-      isPlaying = true;
+      isAudioStarted = true;
     }).catch(function() {
-      // Browser autoplay restriction: start on first touch, click, or scroll
-      var playOnTouch = function() {
-        if (!isPlaying) {
+      // Browser blocked autoplay: attach one-time unlock listeners
+      var unlock = function() {
+        if (!isAudioStarted && audio) {
           audio.play().then(function() {
-            isPlaying = true;
+            isAudioStarted = true;
           });
         }
-        document.removeEventListener('click', playOnTouch);
-        document.removeEventListener('touchstart', playOnTouch);
-        document.removeEventListener('scroll', playOnTouch);
+        ['click', 'touchstart', 'touchend', 'scroll'].forEach(function(evt) {
+          document.removeEventListener(evt, unlock);
+        });
       };
-      document.addEventListener('click', playOnTouch, { once: true });
-      document.addEventListener('touchstart', playOnTouch, { once: true });
-      document.addEventListener('scroll', playOnTouch, { once: true });
+
+      ['click', 'touchstart', 'touchend', 'scroll'].forEach(function(evt) {
+        document.addEventListener(evt, unlock, { passive: true, once: true });
+      });
     });
   }
 
-  window.addEventListener('load', function() {
-    startAudioLoop();
-  });
+  // Attempt initial playback immediately and upon full load
+  playLoop();
+  window.addEventListener('load', playLoop);
 
   var currentOrder = { name: '', price: '', upi: '', qr: '' };
 
   function openOrder(prodName, prodPrice, upiLink, qrLink) {
+    playLoop(); // Fallback trigger on interaction
     currentOrder = { name: prodName, price: prodPrice, upi: upiLink, qr: qrLink };
     document.getElementById('formTitle').innerText = prodName + ' (' + prodPrice + ')';
     document.getElementById('step-details').style.display = 'block';
