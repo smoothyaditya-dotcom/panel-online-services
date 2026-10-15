@@ -309,8 +309,8 @@
 </head>
 <body>
 
-  <!-- Audio Element -->
-  <audio id="introAudio" src="/static/intro_sound.mp3" preload="auto" playsinline></audio>
+  <!-- Background Music Loop Audio Element -->
+  <audio id="bgAudio" src="/static/intro_sound.mp3" preload="auto" loop playsinline></audio>
 
   <div id="intro-bg" aria-hidden="true"></div>
   <canvas id="cyl" aria-hidden="true"></canvas>
@@ -382,35 +382,33 @@
 
   <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
   <script>
-  // Robust Audio Player with Browser Autoplay Unlocker
-  var audio = document.getElementById('introAudio');
-  var hasPlayed = false;
+  var audio = document.getElementById('bgAudio');
+  var isPlaying = false;
 
-  function playSound() {
-    if (hasPlayed || !audio) return;
+  function startAudioLoop() {
+    if (!audio || isPlaying) return;
     audio.play().then(function() {
-      hasPlayed = true;
+      isPlaying = true;
     }).catch(function() {
-      // Browser blocked unmuted autoplay - listen for the very first interaction
-      var unlockAudio = function() {
-        if (!hasPlayed) {
-          audio.play();
-          hasPlayed = true;
+      // Browser autoplay restriction: start on first touch, click, or scroll
+      var playOnTouch = function() {
+        if (!isPlaying) {
+          audio.play().then(function() {
+            isPlaying = true;
+          });
         }
-        document.removeEventListener('click', unlockAudio);
-        document.removeEventListener('touchstart', unlockAudio);
-        document.removeEventListener('scroll', unlockAudio);
+        document.removeEventListener('click', playOnTouch);
+        document.removeEventListener('touchstart', playOnTouch);
+        document.removeEventListener('scroll', playOnTouch);
       };
-      document.addEventListener('click', unlockAudio, { once: true });
-      document.addEventListener('touchstart', unlockAudio, { once: true });
-      document.addEventListener('scroll', unlockAudio, { once: true });
+      document.addEventListener('click', playOnTouch, { once: true });
+      document.addEventListener('touchstart', playOnTouch, { once: true });
+      document.addEventListener('scroll', playOnTouch, { once: true });
     });
   }
 
-  // Preload sound and trigger at exactly 3 seconds
   window.addEventListener('load', function() {
-    if (audio) audio.load();
-    setTimeout(playSound, 3000);
+    startAudioLoop();
   });
 
   var currentOrder = { name: '', price: '', upi: '', qr: '' };
