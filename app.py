@@ -11,6 +11,7 @@ PRODUCTS = [
         "id": 1,
         "name": "Panel",
         "price": "₹20",
+        "num_price": 20,
         "image": BASE_URL + "/static/panel_artwork.jpg",
         "live": True,
         "upi_link": "upi://pay?pa=7276052050@fam&pn=PANEL%20OFFICIAL&am=20.00&cu=INR&tn=Panel%20Payment",
@@ -20,6 +21,7 @@ PRODUCTS = [
         "id": 2,
         "name": "Panel Pro",
         "price": "₹25",
+        "num_price": 25,
         "image": BASE_URL + "/static/panel_artwork.jpg",
         "live": True,
         "upi_link": "upi://pay?pa=7276052050@fam&pn=PANEL%20OFFICIAL&am=25.00&cu=INR&tn=Panel%20Pro%20Payment",
@@ -29,6 +31,7 @@ PRODUCTS = [
         "id": 3,
         "name": "Panel Premium",
         "price": "₹30",
+        "num_price": 30,
         "image": BASE_URL + "/static/panel_artwork.jpg",
         "live": True,
         "upi_link": "upi://pay?pa=7276052050@fam&pn=PANEL%20OFFICIAL&am=30.00&cu=INR&tn=Panel%20Premium%20Payment",
@@ -50,11 +53,13 @@ def save_order():
     addr = str(data.get("address", "")).strip()
     prod = str(data.get("product", "")).strip()
     prc = str(data.get("price", "")).strip()
+    mode = str(data.get("payment_mode", "Online")).strip()
     now = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
 
     entry = "-" * 40 + "\n"
     entry += f"Time: {now}\n"
     entry += f"Product: {prod} ({prc})\n"
+    entry += f"Payment Mode: {mode}\n"
     entry += f"Name: {name}\n"
     entry += f"Phone: {phone}\n"
     entry += f"Address: {addr}\n"
